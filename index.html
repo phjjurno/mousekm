@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2383E2">
+
+<!-- ═══ SEO 기본 ═══ -->
+<title>mousekm — 오늘 당신의 마우스는 어디까지 갈까요?</title>
+<meta name="description" content="키보드·마우스·스크롤 움직임을 실제 거리로 환산해 서울역에서 전국 시·군을 여행하는 게임. 입력 내용은 저장하지 않고 움직임의 횟수와 거리만 측정합니다. 설치 없이 웹에서 바로 시작하세요.">
+<meta name="keywords" content="마우스 이동거리, 키보드 타수 측정, 마우스 거리 측정, 손끝 여행, 활동량 측정, 컴퓨터 사용량, 스크롤 거리, mousekm">
+<meta name="author" content="mousekm">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://mousekm.ws-qf.com/">
+
+<!-- ═══ Open Graph / Twitter ═══ -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="mousekm">
+<meta property="og:title" content="mousekm — 오늘 당신의 마우스는 어디까지 갈까요?">
+<meta property="og:description" content="키보드·마우스 움직임을 실제 거리로 환산해 서울역에서 전국 시·군을 여행하는 게임. 입력 내용은 저장하지 않습니다.">
+<meta property="og:url" content="https://mousekm.ws-qf.com/">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:image" content="https://mousekm.ws-qf.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="mousekm — 손끝으로 떠나는 전국 여행">
+<meta name="twitter:description" content="키보드·마우스 움직임을 거리로 환산해 서울역에서 인천공항까지 전국 시·군을 여행하세요.">
+<meta name="twitter:image" content="https://mousekm.ws-qf.com/og.png">
+
+<!-- ═══ 파비콘 ═══ -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M6 25 Q12 9 25 11' fill='none' stroke='%232383E2' stroke-width='2.2' stroke-linecap='round' stroke-dasharray='1 4'/><path d='M4 4 L10 20 L12.4 13.4 L19 11 Z' fill='%232383E2'/><circle cx='25' cy='11' r='3.4' fill='none' stroke='%232383E2' stroke-width='2.2'/></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232383E2'/><path d='M4 4 L10 20 L12.4 13.4 L19 11 Z' fill='white'/></svg>">
+
+<!-- ═══ 폰트 ═══ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=4">
+
+<!-- ═══ Google AdSense (자동 광고) ═══ -->
+<meta name="google-adsense-account" content="ca-pub-8501673409971666">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8501673409971666" crossorigin="anonymous"></script>
+
+<!-- ═══ 구조화 데이터 (JSON-LD) ═══ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "mousekm",
+  "url": "https://mousekm.ws-qf.com/",
+  "description": "키보드·마우스·스크롤 움직임을 실제 거리로 환산해 서울역에서 전국 시·군을 여행하는 웹 게임. 입력 내용은 저장하지 않고 움직임의 횟수와 거리만 측정합니다.",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "Web",
+  "inLanguage": "ko-KR",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
+  "browserRequirements": "Requires JavaScript. Chrome, Edge, Safari, Firefox 지원."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "mousekm는 내가 입력한 내용을 저장하나요?",
+      "acceptedAnswer": { "@type": "Answer", "text": "아니요. mousekm는 키로거가 아닙니다. 입력한 글자, 비밀번호, 문서·메시지 내용은 수집하지 않으며 오직 키 입력 '횟수'와 마우스·스크롤 '이동량'만 측정합니다. 비밀번호 입력창에서는 횟수 측정도 하지 않습니다." }
+    },
+    {
+      "@type": "Question",
+      "name": "이동 거리는 어떻게 계산되나요?",
+      "acceptedAnswer": { "@type": "Answer", "text": "설정한 모니터 크기(인치)와 해상도로 화면의 PPI를 계산해, 마우스와 스크롤의 픽셀 이동량을 실제 물리 거리로 환산합니다. 여러 모니터는 평균 기준으로 환산합니다." }
+    },
+    {
+      "@type": "Question",
+      "name": "기록은 어디에 저장되나요?",
+      "acceptedAnswer": { "@type": "Answer", "text": "모든 기록은 사용자의 브라우저(localStorage)에만 저장되며 서버로 전송되지 않습니다. 브라우저 데이터를 삭제하면 기록도 함께 사라집니다." }
+    },
+    {
+      "@type": "Question",
+      "name": "설치가 필요한가요?",
+      "acceptedAnswer": { "@type": "Answer", "text": "아니요. 웹에서 '측정 시작'을 누르면 바로 체험할 수 있습니다. 크롬 확장프로그램을 설치하면 mousekm 탭을 닫아도 크롬 안의 모든 페이지에서 측정이 이어집니다(준비 중)." }
+    },
+    {
+      "@type": "Question",
+      "name": "스크롤은 어떻게 계단·산으로 바뀌나요?",
+      "acceptedAnswer": { "@type": "Answer", "text": "표준 계단 한 단 높이(175mm)와 1층=18단(3.15m) 기준으로 스크롤 거리를 층수로 환산합니다. 누적 높이가 남산(262m)·북한산·설악산·한라산(1950m) 등 국내 실제 산의 해발고도를 넘으면 완등으로 표시됩니다." }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<!-- ═══ 헤더 ═══ -->
+<header>
+  <div class="container header-inner">
+    <a class="logo" href="#" aria-label="mousekm 홈">
+      <span class="logo-mark" aria-hidden="true">
+        <svg width="30" height="30" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 25 Q12 9 25 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1 4"/>
+          <path d="M4 4 L10 20 L12.4 13.4 L19 11 Z" fill="currentColor"/>
+          <circle cx="25" cy="11" r="3.4" stroke="currentColor" stroke-width="2.2"/>
+        </svg>
+      </span>
+      <span class="logo-word">mousekm</span>
+    </a>
+    <nav aria-label="주요 메뉴">
+      <a href="#today">오늘의 기록</a>
+      <a href="#journey">여행 지도</a>
+      <a href="#wall">응원 게시판</a>
+      <a href="#weekly">주간 기록</a>
+      <a href="#faq">FAQ</a>
+      <a href="#privacy">개인정보</a>
+    </nav>
+    <div class="header-actions">
+      <button class="btn btn-sm" data-chrome-cta aria-label="Chrome 확장프로그램 추가">Chrome에 추가</button>
+      <button class="btn btn-sm btn-ghost" id="btn-login" aria-label="로그인">로그인</button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ 히어로 ═══ -->
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="container hero-inner">
+    <span class="eyebrow eyebrow-center">손끝으로 떠나는 전국 여행</span>
+    <h1>오늘 당신의 마우스는<br><span class="grad">어디까지</span> 갈까요?</h1>
+    <p class="sub">반복되는 키보드와 마우스 움직임을 실제 거리로 환산해<br>서울역에서 전국 시·군을 여행하는 게임입니다.</p>
+    <div class="hero-actions">
+      <button class="btn btn-lg" id="btn-start-hero">웹에서 바로 시작</button>
+      <button class="btn btn-lg btn-outline" data-chrome-cta>Chrome에 추가</button>
+    </div>
+    <div class="hero-secondary">
+      <button data-open-desktop>컴퓨터 전체 기록하기 →</button>
+    </div>
+    <ul class="hero-trust">
+      <li>✓ 설치 없이 10초 시작</li>
+      <li>✓ 입력 내용 미수집</li>
+      <li>✓ 브라우저에만 저장</li>
+    </ul>
+    <p class="mobile-note" id="mobile-note" hidden>
+      모바일에서는 기록 결과를 확인할 수 있습니다.<br>
+      전체 측정 기능은 데스크톱 Chrome에서 사용할 수 있습니다.
+    </p>
+  </div>
+</section>
+
+<!-- ═══ 오늘의 기록 ═══ -->
+<section id="today" class="container">
+  <div class="section-head">
+    <span class="eyebrow">LIVE</span>
+    <h2>오늘의 기록</h2>
+    <p>측정을 시작하면 이 페이지 안에서의 움직임이 실시간으로 기록됩니다.</p>
+  </div>
+
+  <div class="stats-grid" role="list">
+    <div class="stat-card" role="listitem">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+      <div class="label">키보드</div>
+      <div class="value" id="stat-keys">0타</div>
+    </div>
+    <div class="stat-card" role="listitem">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="5"/><path d="M12 7v3"/></svg>
+      <div class="label">마우스</div>
+      <div class="value" id="stat-mouse">0.0km</div>
+    </div>
+    <div class="stat-card" role="listitem">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V6a3 3 0 016 0v5M5 11h14l-1 9a2 2 0 01-2 2H8a2 2 0 01-2-2l-1-9z"/></svg>
+      <div class="label">클릭</div>
+      <div class="value" id="stat-clicks">0회</div>
+    </div>
+    <!-- 스크롤 → 계단 카드: 호버 시 산 등반 진행도 툴팁 표시 -->
+    <div class="stat-card stairs-card" id="stairs-card" role="listitem" tabindex="0"
+         aria-describedby="mountain-tip">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 21h4v-4h4v-4h4v-4h4V5"/>
+        <path d="M3 21V17M7 17V13M11 13V9M15 9V5"/>
+      </svg>
+      <div class="label">계단</div>
+      <div class="value" id="stat-scroll">0층</div>
+      <div class="stat-sub" id="stat-scroll-sub">0계단 · 0cm</div>
+      <div class="stairs-summit" id="stairs-summit"></div>
+
+      <!-- 산 등반 진행도 툴팁 -->
+      <div class="mountain-tip" id="mountain-tip" role="tooltip">
+        <div class="mt-header">
+          <span class="mt-emoji" id="mt-emoji">⛰️</span>
+          <div>
+            <div class="mt-title" id="mt-title">등반 준비 중</div>
+            <div class="mt-sub" id="mt-sub">스크롤을 시작하면 계단을 오릅니다</div>
+          </div>
+        </div>
+        <div class="mt-progress-wrap">
+          <div class="mt-progress-bar">
+            <div class="mt-progress-fill" id="mt-progress-fill" style="width:0%"></div>
+          </div>
+          <span class="mt-pct" id="mt-pct">0%</span>
+        </div>
+        <div class="mt-target" id="mt-target"></div>
+        <div class="mt-climbed-list" id="mt-climbed-list"></div>
+      </div>
+    </div>
+    <div class="stat-card" role="listitem">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <div class="label">활동 시간</div>
+      <div class="value" id="stat-time">0분</div>
+    </div>
+  </div>
+
+  <div class="tracker-controls">
+    <span class="status-badge" data-state="off">○ 기록 안 함</span>
+    <button class="btn" id="btn-toggle">측정 시작</button>
+    <button class="btn btn-ghost" id="btn-result">결과 보기</button>
+    <button class="btn btn-ghost" id="btn-reset" aria-label="오늘 기록 초기화">기록 초기화</button>
+  </div>
+
+  <!-- 모니터 설정: 픽셀 → 실제 거리 환산 기준 -->
+  <div class="card settings-card">
+    <div class="settings-head">
+      <div>
+        <h3>모니터 설정</h3>
+        <p>모니터 크기를 알려주시면 픽셀 이동량을 실제 거리로 환산합니다.</p>
+      </div>
+      <button class="btn btn-sm btn-ghost" id="btn-detect-monitors" aria-label="연결된 모니터 자동 감지">모니터 자동 감지</button>
+    </div>
+    <div id="monitor-rows"></div>
+    <p class="conversion-live" id="conversion-live"></p>
+  </div>
+</section>
+
+<!-- ═══ 여행 지도 ═══ -->
+<section id="journey" class="container">
+  <div class="section-head">
+    <span class="eyebrow">JOURNEY</span>
+    <h2>손끝으로 떠나는 전국 여행</h2>
+    <p>지금까지 쌓인 누적 이동 거리만큼 서울역에서 출발해 강릉·부산·대구·목포·대전을 지나 인천공항까지, 전국 시·군을 한 바퀴 돕니다.</p>
+  </div>
+  <div class="card journey-card">
+    <p class="journey-sentence" id="journey-sentence">당신의 손끝은 지금<br><strong>서울역</strong>에서 출발을 기다리고 있습니다.</p>
+    <div class="journey-track" role="img" aria-label="여행 진행도">
+      <div class="journey-fill" id="journey-fill" style="width:0%"></div>
+      <div class="journey-pin" id="journey-pin" style="left:0%">🖱</div>
+    </div>
+    <div class="journey-ends">
+      <span id="journey-from">서울역</span>
+      <span id="journey-to">구리</span>
+    </div>
+    <div class="journey-meta">
+      <span id="journey-percent">구간 진행도 0%</span>
+      <span>누적 <strong id="journey-total">0.0km</strong></span>
+      <span id="journey-remain"></span>
+    </div>
+    <div class="journey-passed" id="journey-passed"></div>
+    <p class="conversion-note">※ 거리는 설정한 모니터 크기 기준으로 환산한 추정치이며, 경유지는 서울역에서의 실제 거리를 따릅니다. 여행 지도는 매일 기록을 합산한 <strong>누적 거리</strong>로 나아갑니다.</p>
+  </div>
+</section>
+
+<!-- ═══ 오늘의 칭호 ═══ -->
+<section class="container">
+  <div class="card title-card">
+    <div class="label">오늘의 칭호</div>
+    <div class="value" id="daily-title">「책상 앞 여행자」</div>
+  </div>
+</section>
+
+<!-- ═══ 손끝 응원 방명록 ═══ -->
+<section id="wall" class="container">
+  <div class="section-head">
+    <span class="eyebrow">COMMUNITY</span>
+    <h2>손끝 응원 방명록</h2>
+    <p>오늘도 책상 앞을 여행 중인 서로에게 한 줄 응원을 남겨보세요. 익명으로 누구나 참여할 수 있어요.</p>
+  </div>
+  <div class="card wall-card">
+    <form id="wall-form" class="wall-form" autocomplete="off">
+      <div class="wall-inputs">
+        <input id="wall-nick" class="wall-nick-input" type="text" maxlength="12"
+               placeholder="닉네임 (선택)" aria-label="닉네임">
+        <input id="wall-text" class="wall-text-input" type="text" maxlength="100"
+               placeholder="한 줄 응원을 남겨주세요" aria-label="응원 메시지" required>
+        <button id="wall-submit" class="btn" type="submit">남기기</button>
+      </div>
+      <div class="wall-form-meta">
+        <span id="wall-status" class="wall-status">불러오는 중…</span>
+        <span id="wall-counter" class="wall-counter">0/100</span>
+      </div>
+    </form>
+    <div class="wall-list-head">
+      <span>최근 응원</span>
+      <span class="wall-count-wrap"><strong id="wall-count">0</strong>개</span>
+    </div>
+    <ul id="wall-list" class="wall-list" aria-live="polite">
+      <li class="wall-empty">불러오는 중…</li>
+    </ul>
+    <p class="wall-note">※ 응원 메시지와 닉네임만 저장됩니다. 욕설·광고·전화번호 등 개인정보가 담긴 글은 <strong>자동으로 차단</strong>되며, 남더라도 예고 없이 삭제될 수 있습니다.</p>
+  </div>
+</section>
+
+<!-- ═══ 주간 기록 ═══ -->
+<section id="weekly" class="container">
+  <div class="section-head">
+    <span class="eyebrow">WEEKLY</span>
+    <h2>주간 기록</h2>
+    <p>이번 주 이 브라우저에 저장된 기록입니다.</p>
+  </div>
+  <div class="week-grid">
+    <div class="stat-card"><div class="label">총 이동 거리</div><div class="value" id="week-km">0.0km</div></div>
+    <div class="stat-card"><div class="label">총 키 입력</div><div class="value" id="week-keys">0타</div></div>
+    <div class="stat-card"><div class="label">총 클릭</div><div class="value" id="week-clicks">0회</div></div>
+    <div class="stat-card"><div class="label">총 활동 시간</div><div class="value" id="week-time">0분</div></div>
+  </div>
+  <div class="card">
+    <div class="week-bars" id="week-bars" role="img" aria-label="요일별 이동 거리 그래프"></div>
+  </div>
+</section>
+
+<!-- ═══ 작동 방식 ═══ -->
+<section id="how" class="container">
+  <div class="section-head">
+    <span class="eyebrow">HOW IT WORKS</span>
+    <h2>작동 방식</h2>
+    <p>설치 없이 10초면 시작할 수 있어요.</p>
+  </div>
+  <div class="steps">
+    <div class="card step"><div class="step-num">1</div><h3>웹에서 바로 체험</h3><p>측정 시작을 누르면 이 페이지 안의 키보드·마우스·클릭·스크롤이 기록됩니다.</p></div>
+    <div class="card step"><div class="step-num">2</div><h3>Chrome 전체로 확장</h3><p>확장프로그램을 설치하면 Gmail, Notion, Slack 등 Chrome 안 어디서든 여행이 이어집니다.</p></div>
+    <div class="card step"><div class="step-num">3</div><h3>여행으로 확인</h3><p>움직임이 거리로 환산되어 서울역에서 전국을 도는 하루의 여행이 됩니다.</p></div>
+  </div>
+</section>
+
+<!-- ═══ 개인정보 보호 ═══ -->
+<section id="privacy" class="container">
+  <div class="privacy-banner">
+    <span class="eyebrow eyebrow-center">PRIVACY FIRST</span>
+    <h2>무엇을 입력했는지는 기록하지 않습니다.</h2>
+    <p>mousekm는 키로거가 아닙니다. 입력한 글자, 비밀번호, 문서 및 메시지 내용은 수집하지 않으며,
+      움직임의 횟수와 거리만 측정합니다. 모든 기록은 기본적으로 사용자의 브라우저에 저장됩니다.</p>
+    <div class="privacy-cols">
+      <div class="privacy-col">
+        <h3>저장하는 것</h3>
+        <ul>
+          <li class="ok">키 입력 횟수</li>
+          <li class="ok">클릭 횟수</li>
+          <li class="ok">마우스·스크롤 이동량</li>
+          <li class="ok">활동 시간</li>
+        </ul>
+      </div>
+      <div class="privacy-col">
+        <h3>절대 저장하지 않는 것</h3>
+        <ul>
+          <li class="no">입력한 글자와 문장</li>
+          <li class="no">비밀번호 (횟수 측정도 제외)</li>
+          <li class="no">복사한 텍스트·문서 내용</li>
+          <li class="no">화면 캡처·페이지 본문</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq" class="container">
+  <div class="section-head">
+    <span class="eyebrow">FAQ</span>
+    <h2>자주 묻는 질문</h2>
+    <p>궁금한 점을 눌러서 확인해보세요.</p>
+  </div>
+  <div class="faq-list">
+    <details class="faq-item">
+      <summary>mousekm는 내가 입력한 내용을 저장하나요?</summary>
+      <p>아니요. mousekm는 키로거가 아닙니다. 입력한 글자, 비밀번호, 문서·메시지 내용은 수집하지 않으며 오직 키 입력 <strong>횟수</strong>와 마우스·스크롤 <strong>이동량</strong>만 측정합니다. 비밀번호 입력창에서는 횟수 측정도 하지 않습니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>이동 거리는 어떻게 계산되나요?</summary>
+      <p>설정한 모니터 크기(인치)와 해상도로 화면의 PPI를 계산해, 마우스와 스크롤의 픽셀 이동량을 실제 물리 거리로 환산합니다. 여러 모니터는 평균 기준으로 환산합니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>기록은 어디에 저장되나요?</summary>
+      <p>모든 측정 기록은 사용자의 브라우저(localStorage)에만 저장되며 서버로 전송되지 않습니다. 브라우저 데이터를 삭제하면 기록도 함께 사라집니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>스크롤은 어떻게 계단·산으로 바뀌나요?</summary>
+      <p>표준 계단 한 단 높이(175mm)와 1층=18단(3.15m) 기준으로 스크롤 거리를 층수로 환산합니다. 누적 높이가 남산(262m)·북한산·설악산·한라산(1950m) 등 국내 실제 산의 해발고도를 넘으면 완등으로 표시됩니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>여행 지도는 왜 천천히 움직이나요?</summary>
+      <p>거리를 실제 물리 단위로 정직하게 환산하기 때문입니다. 여행 지도는 매일의 기록을 합산한 <strong>누적 거리</strong>로 전국을 도는 장기 여행이라, 며칠·몇 주에 걸쳐 다음 도시에 도착하게 됩니다.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ═══ 설치 유도 CTA ═══ -->
+<section class="container">
+  <div class="cta-grid">
+    <div class="card cta-card">
+      <span class="badge-soon">준비 중</span>
+      <h3>Chrome을 닫아도 여행은 계속</h3>
+      <p>확장프로그램을 설치하면 mousekm 탭을 닫아도 Chrome 안의 모든 웹페이지에서 활동량을 계속 측정합니다.</p>
+      <button class="btn" data-chrome-cta>Chrome에 추가</button>
+    </div>
+    <div class="card cta-card">
+      <span class="badge-soon">출시 예정</span>
+      <h3>브라우저 밖에서도 일하고 있나요?</h3>
+      <p>mousekm 앱을 설치하면 Word, Excel, 카카오톡 등 컴퓨터 전체의 움직임을 기록할 수 있습니다.</p>
+      <button class="btn btn-outline" data-open-desktop>출시 알림 받기</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 함께 만든 서비스 ═══ -->
+<section id="family" class="container">
+  <div class="section-head">
+    <span class="eyebrow">MORE TO PLAY</span>
+    <h2>같이 즐기면 좋은 서비스</h2>
+    <p>키보드와 마우스로 잠깐 쉬어가기 좋은, 같은 팀이 만든 다른 사이트들이에요.</p>
+  </div>
+  <p class="family-hint">카드를 누르면 <strong>측정을 켠 채</strong> 이 페이지 안에서 바로 체험할 수 있어요. 마우스와 키보드를 실컷 움직여 여행 거리를 늘려보세요!</p>
+  <div class="family-grid">
+    <a class="card family-card" href="https://shutress.ws-qf.com/" target="_blank" rel="noopener"
+       data-embed data-embed-name="Shutress" data-embed-emoji="🥊">
+      <span class="family-emoji" aria-hidden="true">🥊</span>
+      <h3>Shutress</h3>
+      <p>클릭과 키보드로 스트레스를 마음껏 해소하는 게임. "Shut the Stress".</p>
+      <span class="family-go">여기서 체험하기 →</span>
+    </a>
+    <a class="card family-card" href="https://mist.ws-qf.com/" target="_blank" rel="noopener"
+       data-embed data-embed-name="Mist" data-embed-emoji="🌧️">
+      <span class="family-emoji" aria-hidden="true">🌧️</span>
+      <h3>Mist</h3>
+      <p>빗방울 맺힌 창문에 마우스로 편지와 그림을 그리는 감성 놀이터.</p>
+      <span class="family-go">여기서 체험하기 →</span>
+    </a>
+    <a class="card family-card" href="https://yamy.ws-qf.com/" target="_blank" rel="noopener"
+       data-embed data-embed-name="Yamy" data-embed-emoji="🍽️">
+      <span class="family-emoji" aria-hidden="true">🍽️</span>
+      <h3>Yamy</h3>
+      <p>뭐 먹을지 모를 때, 주변 음식점·카페·술집을 대신 골라줘요.</p>
+      <span class="family-go">여기서 체험하기 →</span>
+    </a>
+    <a class="card family-card" href="https://ws-qf.com/" target="_blank" rel="noopener"
+       data-embed data-embed-name="ws-qf" data-embed-emoji="📄">
+      <span class="family-emoji" aria-hidden="true">📄</span>
+      <h3>ws-qf</h3>
+      <p>설치·로그인 없이 쓰는 브라우저 PDF 도구 모음 (합치기·압축·도장).</p>
+      <span class="family-go">여기서 체험하기 →</span>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <span class="logo">
+        <span class="logo-mark" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+            <path d="M6 25 Q12 9 25 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1 4"/>
+            <path d="M4 4 L10 20 L12.4 13.4 L19 11 Z" fill="currentColor"/>
+            <circle cx="25" cy="11" r="3.4" stroke="currentColor" stroke-width="2.2"/>
+          </svg>
+        </span>
+        <span class="logo-word">mousekm</span>
+      </span>
+      <p>일의 내용을 기록하지 않습니다. 손끝의 여정만 기록합니다.</p>
+    </div>
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h4>서비스</h4>
+        <a href="#today">오늘의 기록</a>
+        <a href="#journey">여행 지도</a>
+        <a href="#wall">응원 게시판</a>
+        <a href="#faq">자주 묻는 질문</a>
+      </div>
+      <div class="footer-col">
+        <h4>정책</h4>
+        <button data-open-privacy>개인정보처리방침</button>
+        <button data-open-terms>이용약관</button>
+      </div>
+      <div class="footer-col">
+        <h4>더 보기</h4>
+        <a href="https://shutress.ws-qf.com/" target="_blank" rel="noopener">Shutress</a>
+        <a href="https://mist.ws-qf.com/" target="_blank" rel="noopener">Mist</a>
+        <a href="https://ws-qf.com/" target="_blank" rel="noopener">ws-qf</a>
+      </div>
+    </div>
+  </div>
+  <div class="container footer-bottom">© 2026 mousekm · vspo2@yonsei.ac.kr</div>
+</footer>
+
+<!-- ═══ 플로팅 실시간 위젯 ═══ -->
+<aside class="widget" aria-label="실시간 측정 위젯">
+  <span class="status-badge" data-state="off">○ 기록 안 함</span>
+  <div class="widget-stats">
+    <span id="widget-keys">⌨ 0</span>
+    <span id="widget-mouse">🖱 0.0km</span>
+    <span id="widget-clicks">👆 0</span>
+  </div>
+  <div class="widget-actions">
+    <button class="btn btn-sm" id="widget-toggle">시작</button>
+    <button class="btn btn-sm btn-ghost" id="widget-result" title="상세 결과 보기">결과</button>
+    <button class="btn btn-sm btn-ghost" id="widget-reset" title="오늘 기록 초기화" aria-label="오늘 기록 초기화">↺</button>
+  </div>
+</aside>
+
+<!-- ═══ 모달: 데스크톱 앱 준비 중 ═══ -->
+<div class="modal-backdrop" id="modal-desktop" role="dialog" aria-modal="true" aria-label="데스크톱 앱 안내">
+  <div class="modal">
+    <h3>Chrome 밖에서도 여행을 이어가세요.</h3>
+    <p>mousekm 데스크톱 앱은 Word, Excel, 카카오톡 등 컴퓨터 전체의 키보드와 마우스 움직임을 기록합니다.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>닫기</button>
+      <button class="btn" id="btn-notify">출시 알림 받기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 모달: 기록 초기화 확인 ═══ -->
+<div class="modal-backdrop" id="modal-reset" role="dialog" aria-modal="true" aria-label="기록 삭제 확인">
+  <div class="modal">
+    <h3>오늘 기록을 모두 삭제할까요?</h3>
+    <p>삭제한 기록은 복구할 수 없습니다.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>취소</button>
+      <button class="btn btn-danger" id="btn-reset-confirm">기록 삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 모달: 오늘의 결과 ═══ -->
+<div class="modal-backdrop" id="modal-result" role="dialog" aria-modal="true" aria-label="오늘의 결과">
+  <div class="modal modal-wide">
+    <h3>오늘의 결과</h3>
+    <p class="result-sentence" id="result-sentence"></p>
+    <div class="result-rows" id="result-stats"></div>
+    <div class="result-daily-label" style="margin-top:16px">오늘의 칭호</div>
+    <div class="result-daily-title" id="result-title"></div>
+    <p style="font-size:13px">Chrome 확장프로그램을 설치하면 웹사이트별 활동 시간을 확인할 수 있습니다.</p>
+    <canvas id="result-canvas" aria-label="공유 카드 미리보기"></canvas>
+    <div class="card-sizes" role="group" aria-label="카드 비율 선택">
+      <button class="btn btn-sm active" data-card-size="square">1080×1080</button>
+      <button class="btn btn-sm" data-card-size="story">1080×1920</button>
+      <button class="btn btn-sm" data-card-size="wide">1200×630</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close>닫기</button>
+      <button class="btn" id="btn-download-card">이미지로 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 모달: 개인정보처리방침 ═══ -->
+<div class="modal-backdrop" id="modal-privacy" role="dialog" aria-modal="true" aria-label="개인정보처리방침">
+  <div class="modal modal-wide legal">
+    <h3>개인정보처리방침</h3>
+    <p class="legal-updated">시행일: 2026년 7월 17일 · 최종 개정: 2026년 7월 17일</p>
+
+    <p>mousekm(이하 "서비스")는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 등 관련 법령을 준수합니다. 본 방침은 서비스가 어떤 정보를 어떻게 다루는지 투명하게 안내하기 위한 것입니다.</p>
+
+    <h4>1. 개인정보 처리 최소화 원칙</h4>
+    <p>서비스는 이용자가 <strong>무엇을 입력했는지</strong>를 알 수 있는 어떠한 정보도 수집하지 않습니다. 서비스는 키로거(keylogger)가 아니며, 오직 움직임의 <strong>횟수와 이동량</strong>이라는 수치 데이터만을 측정합니다.</p>
+
+    <h4>2. 수집하는 정보</h4>
+    <ul>
+      <li>키보드 입력 <strong>횟수</strong>, 마우스 클릭 <strong>횟수</strong></li>
+      <li>마우스·스크롤 <strong>이동량(픽셀)</strong> 및 이를 환산한 거리·층수·해발고도</li>
+      <li>활동 시간·비활성 시간, 날짜별 통계</li>
+      <li>이용자가 직접 설정한 모니터 크기(인치)·해상도 정보</li>
+      <li>응원 방명록 이용 시: 이용자가 직접 입력한 <strong>닉네임과 한 줄 메시지</strong>, 익명 식별자(중복 방지·본인 글 삭제 목적)</li>
+    </ul>
+
+    <h4>3. 수집하지 않는 정보</h4>
+    <ul>
+      <li>입력한 글자·문장·검색어, 비밀번호 (비밀번호 입력창에서는 횟수 측정도 하지 않습니다)</li>
+      <li>복사·붙여넣기한 텍스트, 문서·메시지·이메일의 내용</li>
+      <li>웹페이지 본문, 화면 캡처, 파일 및 그 내용</li>
+      <li>이름·연락처·주소 등 이용자를 식별할 수 있는 정보 (문의 시 이용자가 직접 제공하는 경우 제외)</li>
+    </ul>
+
+    <h4>4. 저장 위치 및 보관 기간</h4>
+    <p>측정 기록은 서버로 전송되지 않고 이용자의 브라우저(localStorage)에만 저장되며, 이용자가 삭제하기 전까지 보관됩니다. 응원 방명록에 남긴 글은 서비스가 이용하는 클라우드 데이터베이스(Google Firebase, 리전: 서울)에 저장되며, 이용자 본인 또는 운영자가 삭제하기 전까지 보관됩니다.</p>
+
+    <h4>5. 처리 위탁 및 제3자 제공</h4>
+    <p>서비스는 수집한 정보를 이용자의 동의 없이 제3자에게 제공·판매하지 않습니다. 다만 방명록 기능 제공을 위해 아래 사업자에 데이터 처리를 위탁합니다.</p>
+    <ul>
+      <li><strong>Google Firebase</strong>(Google LLC): 방명록 데이터 저장 및 익명 인증</li>
+    </ul>
+
+    <h4>6. 쿠키 및 광고</h4>
+    <p>서비스는 원활한 이용을 위해 로컬 저장소(localStorage)를 사용합니다. 또한 Google AdSense를 통한 광고가 게재될 수 있으며, 이 과정에서 Google 및 광고 파트너가 쿠키를 사용해 이용자의 관심 기반 광고를 제공할 수 있습니다. 이용자는 <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google 광고 설정</a>에서 맞춤 광고를 해제할 수 있습니다.</p>
+
+    <h4>7. 이용자의 권리</h4>
+    <p>이용자는 언제든지 자신의 기록을 열람·삭제할 수 있습니다. 화면의 「기록 초기화」 버튼으로 오늘 기록을, 브라우저의 사이트 데이터 삭제로 전체 측정 기록을 삭제할 수 있습니다. 방명록 글은 본인이 작성한 글의 「삭제」 버튼으로 지울 수 있습니다.</p>
+
+    <h4>8. 아동의 개인정보</h4>
+    <p>서비스는 만 14세 미만 아동을 주요 대상으로 하지 않으며, 아동의 개인정보를 고의로 수집하지 않습니다.</p>
+
+    <h4>9. 안전성 확보 조치</h4>
+    <p>서비스는 개인정보를 최소한으로만 처리하고, 방명록 데이터는 접근 권한이 제한된 보안 규칙 하에 저장됩니다. 통신 구간은 HTTPS로 암호화됩니다.</p>
+
+    <h4>10. 개인정보 보호 책임자 및 문의</h4>
+    <p>개인정보 관련 문의: <a href="mailto:vspo2@yonsei.ac.kr">vspo2@yonsei.ac.kr</a></p>
+
+    <h4>11. 고지의 의무</h4>
+    <p>본 방침의 내용 추가·삭제·수정이 있을 경우, 시행 전 서비스 내 공지를 통해 안내합니다.</p>
+
+    <div class="modal-actions">
+      <button class="btn" data-close>닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 모달: 이용약관 ═══ -->
+<div class="modal-backdrop" id="modal-terms" role="dialog" aria-modal="true" aria-label="이용약관">
+  <div class="modal modal-wide legal">
+    <h3>이용약관</h3>
+    <p class="legal-updated">시행일: 2026년 7월 17일</p>
+
+    <h4>제1조 (목적)</h4>
+    <p>본 약관은 이용자가 mousekm(이하 "서비스")를 이용함에 있어 서비스와 이용자 간의 권리·의무 및 책임사항, 이용 조건 및 절차 등 기본적인 사항을 규정함을 목적으로 합니다.</p>
+
+    <h4>제2조 (서비스의 성격)</h4>
+    <p>서비스는 컴퓨터 사용 중의 키보드·마우스 움직임을 실제 거리로 환산해 여행과 게임 요소로 보여주는 <strong>재미 목적의 무료 서비스</strong>입니다. 서비스는 생산성 평가, 근태·업무 감시, 의학적·과학적 측정 도구가 아니며 그러한 용도로 사용해서는 안 됩니다.</p>
+
+    <h4>제3조 (약관의 효력 및 변경)</h4>
+    <p>본 약관은 서비스 화면에 게시함으로써 효력이 발생합니다. 서비스는 관련 법령을 위반하지 않는 범위에서 약관을 개정할 수 있으며, 개정 시 시행일과 내용을 서비스 내에 공지합니다.</p>
+
+    <h4>제4조 (거리·수치 표시에 대한 안내)</h4>
+    <p>서비스가 표시하는 거리·층수·해발고도·칭호 등은 이용자가 설정한 모니터 크기를 기준으로 픽셀 이동량을 환산한 <strong>추정치</strong>이며, 실제 물리적 이동거리나 운동량과 차이가 있을 수 있습니다. 서비스는 이 수치의 정확성을 보증하지 않습니다.</p>
+
+    <h4>제5조 (데이터에 대한 책임)</h4>
+    <p>측정 기록은 이용자의 브라우저에만 저장됩니다. 브라우저 데이터 삭제, 시크릿 모드 사용, 기기 변경 등으로 인한 기록 손실에 대해 서비스는 복구를 보장하지 않습니다.</p>
+
+    <h4>제6조 (커뮤니티 이용 및 금지행위)</h4>
+    <p>이용자는 응원 방명록 등 커뮤니티 기능 이용 시 다음 행위를 하여서는 안 됩니다.</p>
+    <ul>
+      <li>욕설·비방·차별·혐오 표현, 타인에 대한 명예훼손</li>
+      <li>광고·홍보·스팸, 반복 도배</li>
+      <li>타인의 개인정보(연락처·주소 등) 게시</li>
+      <li>음란물·불법 정보의 게시, 저작권 등 타인의 권리 침해</li>
+      <li>자동화된 수단(매크로 등)을 이용한 비정상적 이용·조작</li>
+    </ul>
+    <p>서비스는 위 행위에 해당하는 게시물을 사전 통지 없이 삭제할 수 있습니다.</p>
+
+    <h4>제7조 (게시물의 권리)</h4>
+    <p>이용자가 작성한 게시물의 권리는 이용자에게 있습니다. 다만 서비스는 서비스 운영·개선 및 노출을 위해 필요한 범위에서 해당 게시물을 사용할 수 있습니다.</p>
+
+    <h4>제8조 (서비스의 변경·중단)</h4>
+    <p>서비스의 기능은 사전 고지 없이 추가·변경될 수 있으며, 운영상·기술상 필요에 따라 서비스의 전부 또는 일부가 중단될 수 있습니다.</p>
+
+    <h4>제9조 (광고의 게재)</h4>
+    <p>서비스는 운영을 위해 Google AdSense 등 광고를 게재할 수 있습니다. 광고 영역의 상품·서비스에 대한 거래는 이용자와 광고주 간의 문제이며, 서비스는 이에 대해 책임지지 않습니다.</p>
+
+    <h4>제10조 (책임의 한계)</h4>
+    <p>서비스는 무료로 제공되며, 서비스 이용으로 발생한 손해에 대해 관련 법령이 허용하는 범위 내에서 책임을 지지 않습니다. 서비스는 "있는 그대로(as-is)" 제공됩니다.</p>
+
+    <h4>제11조 (준거법 및 관할)</h4>
+    <p>본 약관은 대한민국 법령에 따라 해석되며, 서비스 이용과 관련한 분쟁은 관련 법령이 정한 절차에 따릅니다.</p>
+
+    <p class="legal-updated" style="margin-top:18px">부칙: 본 약관은 2026년 7월 17일부터 시행합니다.</p>
+
+    <div class="modal-actions">
+      <button class="btn" data-close>닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 모달: 다른 사이트 체험 (페이지 내 페이지) ═══ -->
+<div class="modal-backdrop" id="modal-embed" role="dialog" aria-modal="true" aria-label="사이트 체험">
+  <div class="modal modal-embed">
+    <div class="embed-head">
+      <div class="embed-title">
+        <span class="embed-emoji" id="embed-emoji" aria-hidden="true">🎮</span>
+        <div>
+          <strong id="embed-name">사이트</strong>
+          <span class="embed-sub">측정을 켠 채 이 안에서 체험할 수 있어요</span>
+        </div>
+      </div>
+      <div class="embed-actions">
+        <span class="embed-rec" id="embed-rec" data-state="off">○ 대기</span>
+        <a class="btn btn-sm btn-ghost" id="embed-open" href="#" target="_blank" rel="noopener">새 창에서 열기 ↗</a>
+        <button class="btn btn-sm btn-ghost" data-close aria-label="체험 닫기">닫기 ✕</button>
+      </div>
+    </div>
+    <div class="embed-frame-wrap">
+      <iframe id="embed-frame" title="사이트 체험" referrerpolicy="no-referrer"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock"
+              loading="lazy"></iframe>
+      <div class="embed-loading" id="embed-loading" hidden>
+        <span class="embed-spinner" aria-hidden="true"></span>
+        <p>불러오는 중…</p>
+      </div>
+      <div class="embed-fallback" id="embed-fallback" hidden>
+        <p id="embed-fallback-msg">이 사이트는 페이지 안에서 열 수 없도록 설정되어 있어요.</p>
+        <a class="btn" id="embed-fallback-open" href="#" target="_blank" rel="noopener">새 창에서 열기 ↗</a>
+      </div>
+    </div>
+    <p class="embed-note">※ 체험하는 동안 마우스·키보드 움직임은 계속 여행 거리에 반영됩니다. 다른 사이트 내부의 상세 활동은 그 사이트에서 측정됩니다.</p>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ═══ Firebase (방명록용, compat SDK) ═══ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script type="module" src="js/main.js?v=3"></script>
+</body>
+</html>
