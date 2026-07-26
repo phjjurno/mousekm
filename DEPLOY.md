@@ -32,7 +32,20 @@ git add netlify.toml && git commit -m "allow framing from mousekm" && git push
 - 적용 후: **배포된 mousekm.ws-qf.com에서만** Shutress가 인라인으로 열립니다(다른 사이트·localhost는 계속 차단). 재배포 전 또는 로컬(localhost)에서는 8초 후 "새 창에서 열기" 폴백이 뜹니다.
 - Mist·Yamy·ws-qf는 헤더가 없어 별도 작업 없이 인라인으로 열립니다.
 
-## 5. 호스팅
+## 5. 크롬 확장프로그램 (extension/)
+크롬 안 모든 탭에서 측정하는 MV3 확장. mousekm 사이트 방문 시 확장 기록이 여행 지도에 자동 합산됩니다(브리지). 사이트 자체는 확장이 측정하지 않아 이중 합산 없음.
+
+**개발자 모드 설치(지금 바로 사용):**
+1. Chrome 주소창에 `chrome://extensions` 입력
+2. 우측 상단 **개발자 모드** ON
+3. **압축해제된 확장 프로그램을 로드** → `/Users/j2sign/Coding/mousekm/extension` 폴더 선택
+4. 툴바의 mousekm 아이콘 클릭 → 오늘 기록·여행 확인, 일시정지/재개
+
+**웹스토어 등록(선택):** [Chrome Web Store 개발자 콘솔](https://chrome.google.com/webstore/devconsole)에서 1회 등록비 $5 결제 후 extension 폴더를 zip으로 업로드 → 심사(수일). 등록되면 사이트의 "Chrome에 추가" 버튼을 실제 스토어 링크로 교체.
+
+**참고:** 확장은 크롬 내부만 측정합니다. 크롬 밖(Word·카카오톡 등 OS 전체)은 데스크톱 앱(3차 계획)이 필요합니다. 팝업의 거리 환산은 24인치 기본 가정이며, 정밀 환산은 사이트의 모니터 설정을 따릅니다.
+
+## 6. 호스팅
 기존 서브사이트와 동일하게 Netlify(ws-qf.com 서브도메인) 또는 정적 호스팅에 업로드.
 
 ## 로컬 확인

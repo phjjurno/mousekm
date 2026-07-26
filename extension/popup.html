@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<header class="head">
+  <span class="logo">
+    <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M6 25 Q12 9 25 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1 4"/>
+      <path d="M4 4 L10 20 L12.4 13.4 L19 11 Z" fill="currentColor"/>
+      <circle cx="25" cy="11" r="3.4" stroke="currentColor" stroke-width="2.2"/>
+    </svg>
+    mousekm
+  </span>
+  <span class="badge" id="badge">● 기록 중</span>
+</header>
+
+<section class="stats">
+  <div class="stat"><span class="k">⌨ 키보드</span><strong id="s-keys">0타</strong></div>
+  <div class="stat"><span class="k">👆 클릭</span><strong id="s-clicks">0회</strong></div>
+  <div class="stat"><span class="k">🖱 마우스</span><strong id="s-mouse">0cm</strong></div>
+  <div class="stat"><span class="k">🪜 계단</span><strong id="s-stairs">0계단</strong></div>
+  <div class="stat"><span class="k">⏱ 활동</span><strong id="s-time">0분</strong></div>
+</section>
+
+<section class="journey">
+  <p class="sentence" id="j-sentence">서울역에서 출발을 기다리는 중</p>
+  <div class="track"><div class="fill" id="j-fill"></div></div>
+  <div class="ends"><span id="j-from">서울역</span><span id="j-to">구리</span></div>
+  <p class="meta" id="j-meta">누적 0cm</p>
+</section>
+
+<footer class="actions">
+  <button id="btn-toggle" class="btn">일시정지</button>
+  <button id="btn-site" class="btn ghost">사이트 열기</button>
+</footer>
+<p class="note">입력한 내용은 수집하지 않습니다 · 기록은 이 브라우저에만 저장됩니다</p>
+
+<script src="popup.js"></script>
+</body>
+</html>

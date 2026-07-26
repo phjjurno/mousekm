@@ -1,0 +1,36 @@
+/* mousekm 확장 팝업 — 사이트 디자인 토큰 축소판 */
+:root{
+  --primary:#2383E2;--text:#191919;--sub:#787774;--bg:#FFFFFF;
+  --surface:#F7F6F3;--border:#E9E9E7;--danger:#D44C47;
+}
+@media (prefers-color-scheme: dark){
+  :root{--primary:#4A9BEA;--text:#EDEDEB;--sub:#9B9B98;--bg:#191919;--surface:#212121;--border:#2F2F2E}
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  width:300px;font-family:'Inter','Apple SD Gothic Neo',sans-serif;
+  background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;
+}
+.head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:7px;font-weight:800;font-size:15px}
+.logo svg{color:var(--primary)}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--danger);color:var(--danger)}
+.badge.paused{border-color:var(--primary);color:var(--primary)}
+.stats{padding:10px 14px;display:grid;gap:6px}
+.stat{display:flex;justify-content:space-between;align-items:baseline}
+.stat .k{color:var(--sub);font-size:12px}
+.stat strong{font-variant-numeric:tabular-nums;font-size:13.5px}
+.journey{margin:4px 14px 12px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.sentence{font-size:12.5px;font-weight:600;text-align:center;margin-bottom:10px}
+.sentence strong{color:var(--primary)}
+.track{height:6px;background:var(--border);border-radius:999px;overflow:hidden}
+.fill{height:100%;width:0%;background:var(--primary);border-radius:999px;transition:width .3s}
+.ends{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-top:6px}
+.meta{font-size:11px;color:var(--sub);text-align:center;margin-top:6px}
+.actions{display:flex;gap:8px;padding:0 14px 10px}
+.btn{
+  flex:1;padding:9px 0;border-radius:9px;border:1px solid var(--primary);
+  background:var(--primary);color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;
+}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--border)}
+.note{padding:0 14px 12px;font-size:10.5px;color:var(--sub);text-align:center}

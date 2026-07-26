@@ -137,14 +137,28 @@ $('#stairs-card')?.addEventListener('click', (e) => {
   $('#stairs-card').classList.toggle('tip-open');
 });
 
-// 누적(평생) 여행 거리 — 저장된 모든 날짜 + 오늘의 실시간 상태
+// 크롬 확장이 남긴 누적 기록(px) — 확장 브리지가 localStorage('mousekm.ext.v1')에 기록
+// (확장은 mousekm 사이트 자체를 측정하지 않으므로 이중 합산 없음)
+function extLifetimePx() {
+  try {
+    const ext = JSON.parse(localStorage.getItem('mousekm.ext.v1'));
+    let sum = 0;
+    for (const k in (ext?.days || {})) {
+      const d = ext.days[k];
+      sum += (d.mousePx || 0) + (d.scrollPx || 0);
+    }
+    return sum;
+  } catch { return 0; }
+}
+
+// 누적(평생) 여행 거리 — 저장된 모든 날짜 + 오늘의 실시간 상태 + 확장 기록
 function lifetimeTravelKm() {
   const totals = loadLifetimeTotals();               // 오늘의 '저장된' 스냅샷 포함
   const saved  = loadDay(tracker.dateKey);           // 오늘의 저장 스냅샷
   const live   = tracker.state;
   const mousePx  = totals.mousePx  - (saved.mouseDistancePixels  || 0) + live.mouseDistancePixels;
   const scrollPx = totals.scrollPx - (saved.scrollDistancePixels || 0) + live.scrollDistancePixels;
-  return toKm(mousePx + scrollPx);
+  return toKm(mousePx + scrollPx + extLifetimePx());
 }
 
 // ── 실시간 대시보드 렌더 ──
@@ -348,7 +362,7 @@ $$('[data-open-terms]').forEach((btn) =>
   btn.addEventListener('click', () => openModal('#modal-terms')));
 
 $$('[data-chrome-cta]').forEach((btn) =>
-  btn.addEventListener('click', () => toast('Chrome 확장프로그램은 준비 중입니다. 지금은 웹에서 측정해보세요!')));
+  btn.addEventListener('click', () => toast('확장프로그램은 웹스토어 심사 준비 중이에요.\n지금은 GitHub(phjjurno/mousekm)의 extension 폴더를\nchrome://extensions → 개발자 모드로 설치할 수 있습니다.')));
 $('#btn-login').addEventListener('click', () => toast('로그인은 준비 중입니다.'));
 
 // ── 다른 사이트 체험 (페이지 내 페이지, 측정 유지) ──
