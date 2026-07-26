@@ -4,6 +4,10 @@
 (() => {
   'use strict';
 
+  // 이중 주입 방지 (설치 시 자동 주입 + 선언적 주입이 겹칠 수 있음)
+  if (window.__mousekmTracking) return;
+  window.__mousekmTracking = true;
+
   // mousekm 사이트 자체는 페이지 내 트래커가 측정하므로 제외 (이중 측정 방지)
   const EXCLUDED_HOSTS = new Set(['mousekm.ws-qf.com', 'localhost:8934', '127.0.0.1:8934']);
   if (EXCLUDED_HOSTS.has(location.host)) return;

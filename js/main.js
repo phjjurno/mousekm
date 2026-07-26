@@ -1,17 +1,17 @@
 // mousekm 메인 — 측정 엔진과 UI를 연결한다
-import { TRACKING } from './config.js?v=3';
-import { ARRIVAL_MESSAGES } from './routes.js?v=3';
-import { createTracker, STATUS } from './tracker.js?v=3';
-import { getJourney } from './journey.js?v=3';
-import { generateTitle } from './titleGenerator.js?v=3';
-import { loadThisWeek, loadLifetimeTotals, loadDay } from './storage.js?v=3';
-import { drawResultCard, downloadCard, pickShareLine } from './resultCard.js?v=3';
+import { TRACKING } from './config.js?v=5';
+import { ARRIVAL_MESSAGES } from './routes.js?v=5';
+import { createTracker, STATUS } from './tracker.js?v=5';
+import { getJourney } from './journey.js?v=5';
+import { generateTitle } from './titleGenerator.js?v=5';
+import { loadThisWeek, loadLifetimeTotals, loadDay } from './storage.js?v=5';
+import { drawResultCard, downloadCard, pickShareLine } from './resultCard.js?v=5';
 import {
   loadDisplay, saveDisplay, pxPerKm, conversionHint,
   detectMonitors, isMultiScreen, defaultMonitor, MONITOR_INCHES, MAX_MONITORS,
-} from './display.js?v=3';
-import { stairsInfo, fmtHeight, MOUNTAINS } from './stairs.js?v=3';
-import { initWall } from './wall.js?v=3';
+} from './display.js?v=5';
+import { stairsInfo, fmtHeight, MOUNTAINS } from './stairs.js?v=5';
+import { initWall } from './wall.js?v=5';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -495,19 +495,22 @@ function applyDisplay() {
 }
 
 $('#btn-detect-monitors').addEventListener('click', async () => {
-  const detected = await detectMonitors();
-  if (!detected) {
-    toast(isMultiScreen()
-      ? '이 브라우저에서는 자동 감지를 지원하지 않아요. 수동으로 선택해주세요.'
-      : '자동 감지를 사용할 수 없어요. 수동으로 선택해주세요.');
+  const result = await detectMonitors();
+  if (!result.ok) {
+    const msgs = {
+      unsupported: '이 브라우저는 자동 감지를 지원하지 않아요 (Chrome·Edge 100+ 필요).\n수동으로 모니터 수와 크기를 선택해주세요.',
+      denied: '창 관리 권한이 거부됐어요.\n주소창 오른쪽 사이트 설정에서 「창 관리」를 허용한 뒤 다시 눌러주세요.',
+      error: `자동 감지에 실패했어요${isMultiScreen() ? ' (권한 팝업을 확인해주세요)' : ''}.\n수동으로 선택해주세요.`,
+    };
+    toast(msgs[result.reason] || msgs.error);
     return;
   }
-  display.monitors = detected.map((d, i) => ({
+  display.monitors = result.screens.map((d, i) => ({
     inch: display.monitors[i]?.inch ?? 24,
     ...d,
   }));
   applyDisplay();
-  toast(`모니터 ${detected.length}대를 감지했습니다. 크기(인치)를 확인해주세요.`);
+  toast(`모니터 ${result.screens.length}대를 감지했습니다. 크기(인치)를 확인해주세요.`);
 });
 
 // ── 루프 시작 ──

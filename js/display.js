@@ -45,18 +45,22 @@ export function conversionHint(settings) {
   return `현재 환산 기준: 1,000px ≈ ${cm.toFixed(1)}cm`;
 }
 
-// Window Management API로 연결된 모니터 감지 (Chrome 100+, 권한 필요)
+// Window Management API로 연결된 모니터 감지 (Chrome 100+, "창 관리" 권한 필요)
 // 해상도는 자동으로 채워지고 인치는 사용자가 선택한다.
+// 반환: { ok:true, screens:[{resW,resH}] } | { ok:false, reason:'unsupported'|'denied'|'error' }
 export async function detectMonitors() {
-  if (!('getScreenDetails' in window)) return null;
+  if (!('getScreenDetails' in window)) return { ok: false, reason: 'unsupported' };
   try {
     const details = await window.getScreenDetails();
-    return details.screens.map((sc) => {
-      const dpr = sc.devicePixelRatio || 1;
-      return { resW: Math.round(sc.width * dpr), resH: Math.round(sc.height * dpr) };
-    });
-  } catch {
-    return null; // 권한 거부 등
+    return {
+      ok: true,
+      screens: details.screens.map((sc) => {
+        const dpr = sc.devicePixelRatio || 1;
+        return { resW: Math.round(sc.width * dpr), resH: Math.round(sc.height * dpr) };
+      }),
+    };
+  } catch (e) {
+    return { ok: false, reason: e?.name === 'NotAllowedError' ? 'denied' : 'error' };
   }
 }
 

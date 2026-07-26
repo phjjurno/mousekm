@@ -1,7 +1,7 @@
 // 측정 엔진 — 입력 "내용"은 절대 다루지 않고 횟수·이동량만 누적한다.
 // event.key, input.value, 클립보드, 화면 내용은 어떤 경우에도 읽거나 저장하지 않는다.
-import { TRACKING } from './config.js?v=3';
-import { todayKey, loadDay, saveDay, deleteDay, emptyRecord } from './storage.js?v=3';
+import { TRACKING } from './config.js?v=5';
+import { todayKey, loadDay, saveDay, deleteDay, emptyRecord } from './storage.js?v=5';
 
 export const STATUS = { OFF: 'off', RECORDING: 'recording', PAUSED: 'paused' };
 
