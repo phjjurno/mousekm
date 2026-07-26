@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "mousekm — 손끝으로 떠나는 전국 여행",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "크롬 안 어디서든 키보드·마우스 움직임을 실제 거리로 환산해 전국을 여행합니다. 입력 내용은 절대 수집하지 않습니다.",
-  "permissions": ["storage", "scripting"],
+  "permissions": ["storage", "scripting", "system.display"],
   "host_permissions": ["http://*/*", "https://*/*"],
   "background": { "service_worker": "bg.js" },
   "action": {

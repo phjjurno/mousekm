@@ -74,10 +74,26 @@
   function flush() {
     if (!keys && !clicks && !mousePx && !scrollPx && !activeSec) return;
     const delta = { type: 'mousekm:delta', keys, clicks, mousePx, scrollPx, activeSec };
+    const sent = { keys, clicks, mousePx, scrollPx, activeSec };
     keys = clicks = mousePx = scrollPx = activeSec = 0;
-    try { chrome.runtime.sendMessage(delta); } catch { /* 확장 리로드 등 — 다음 페이지에서 재개 */ }
+    try {
+      // 콜백을 넘겨 응답을 기다린다 → 서비스 워커가 저장을 마칠 때까지 살아 있게 된다
+      chrome.runtime.sendMessage(delta, () => {
+        if (chrome.runtime.lastError) {
+          // 워커 미기동 등 전달 실패 — 다음 주기에 다시 보내도록 되돌린다
+          keys += sent.keys; clicks += sent.clicks;
+          mousePx += sent.mousePx; scrollPx += sent.scrollPx; activeSec += sent.activeSec;
+        }
+      });
+    } catch {
+      keys += sent.keys; clicks += sent.clicks;
+      mousePx += sent.mousePx; scrollPx += sent.scrollPx; activeSec += sent.activeSec;
+    }
   }
 
   setInterval(flush, FLUSH_INTERVAL_MS);
+  // 탭을 숨기거나 떠날 때도 즉시 저장 (백그라운드 타이머 지연 대비)
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
   window.addEventListener('pagehide', flush);
+  window.addEventListener('blur', flush);
 })();

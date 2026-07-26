@@ -1,17 +1,17 @@
 // mousekm 메인 — 측정 엔진과 UI를 연결한다
-import { TRACKING } from './config.js?v=5';
-import { ARRIVAL_MESSAGES } from './routes.js?v=5';
-import { createTracker, STATUS } from './tracker.js?v=5';
-import { getJourney } from './journey.js?v=5';
-import { generateTitle } from './titleGenerator.js?v=5';
-import { loadThisWeek, loadLifetimeTotals, loadDay } from './storage.js?v=5';
-import { drawResultCard, downloadCard, pickShareLine } from './resultCard.js?v=5';
+import { TRACKING } from './config.js?v=6';
+import { ARRIVAL_MESSAGES } from './routes.js?v=6';
+import { createTracker, STATUS } from './tracker.js?v=6';
+import { getJourney } from './journey.js?v=6';
+import { generateTitle } from './titleGenerator.js?v=6';
+import { loadThisWeek, loadLifetimeTotals, loadDay } from './storage.js?v=6';
+import { drawResultCard, downloadCard, pickShareLine } from './resultCard.js?v=6';
 import {
   loadDisplay, saveDisplay, pxPerKm, conversionHint,
   detectMonitors, isMultiScreen, defaultMonitor, MONITOR_INCHES, MAX_MONITORS,
-} from './display.js?v=5';
-import { stairsInfo, fmtHeight, MOUNTAINS } from './stairs.js?v=5';
-import { initWall } from './wall.js?v=5';
+} from './display.js?v=6';
+import { stairsInfo, fmtHeight, MOUNTAINS } from './stairs.js?v=6';
+import { initWall } from './wall.js?v=6';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -447,9 +447,15 @@ if (window.matchMedia('(pointer: coarse)').matches) {
 function renderMonitorSettings() {
   const rows     = $('#monitor-rows');
   const countSel = display.monitors.length;
-  const inchOpts = (sel) => MONITOR_INCHES
-    .map((v) => `<option value="${v}" ${v === sel ? 'selected' : ''}>${v}인치</option>`)
-    .join('');
+  // 감지된 인치가 기본 목록에 없으면 그 값도 선택지로 추가한다 (예: 27.3인치)
+  const inchOpts = (sel) => {
+    const list = MONITOR_INCHES.includes(sel) || sel == null
+      ? MONITOR_INCHES
+      : [...MONITOR_INCHES, sel].sort((a, b) => a - b);
+    return list
+      .map((v) => `<option value="${v}" ${v === sel ? 'selected' : ''}>${v}인치</option>`)
+      .join('');
+  };
 
   rows.innerHTML = `
     <div class="monitor-row">
@@ -506,11 +512,18 @@ $('#btn-detect-monitors').addEventListener('click', async () => {
     return;
   }
   display.monitors = result.screens.map((d, i) => ({
-    inch: display.monitors[i]?.inch ?? 24,
-    ...d,
+    inch: d.inch ?? display.monitors[i]?.inch ?? 24,
+    resW: d.resW,
+    resH: d.resH,
   }));
   applyDisplay();
-  toast(`모니터 ${result.screens.length}대를 감지했습니다. 크기(인치)를 확인해주세요.`);
+
+  const n = result.screens.length;
+  const inches = result.screens.map((d) => `${d.inch}″`).join(' · ');
+  const anyEstimated = result.screens.some((d) => d.estimated);
+  toast(result.source === 'ext' && !anyEstimated
+    ? `확장프로그램으로 모니터 ${n}대를 감지했습니다.\n${inches} — 실측 크기로 환산합니다.`
+    : `모니터 ${n}대를 감지했습니다.\n크기는 ${inches}로 추정했어요 — 다르면 직접 선택해주세요.`);
 });
 
 // ── 루프 시작 ──

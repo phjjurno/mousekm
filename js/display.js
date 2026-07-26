@@ -45,18 +45,56 @@ export function conversionHint(settings) {
   return `현재 환산 기준: 1,000px ≈ ${cm.toFixed(1)}cm`;
 }
 
-// Window Management API로 연결된 모니터 감지 (Chrome 100+, "창 관리" 권한 필요)
-// 해상도는 자동으로 채워지고 인치는 사용자가 선택한다.
-// 반환: { ok:true, screens:[{resW,resH}] } | { ok:false, reason:'unsupported'|'denied'|'error' }
+// 해상도만으로 화면 크기(인치)를 추정한다.
+// 브라우저는 물리적 크기를 알 수 없어, 화면 종류별 대표 PPI로 근사한다.
+export function estimateInch(resW, resH, scale = 1) {
+  const diag = Math.hypot(resW, resH);
+  let ppi;
+  if (scale >= 2)       ppi = diag < 4500 ? 245 : 218;  // 노트북 / 대형 레티나
+  else if (diag > 4000) ppi = 157;                      // 4K
+  else if (diag > 2800) ppi = 109;                      // QHD
+  else                  ppi = 92;                       // FHD
+  return Math.round((diag / ppi) * 10) / 10;
+}
+
+// 크롬 확장이 감지해 넘겨준 모니터 정보 (인치 포함) — 확장 브리지가 기록
+function loadExtDisplays() {
+  try {
+    const d = JSON.parse(localStorage.getItem('mousekm.ext.display.v1'));
+    const list = d?.displays;
+    return Array.isArray(list) && list.length ? list : null;
+  } catch { return null; }
+}
+
+// 모니터 자동 감지
+// 1순위: 크롬 확장(chrome.system.display) — 대수·해상도·인치까지 감지
+// 2순위: Window Management API — 대수·해상도는 정확, 인치는 추정
+// 반환: { ok:true, screens:[{resW,resH,inch,estimated}], source:'ext'|'web' }
+//     | { ok:false, reason:'unsupported'|'denied'|'error' }
 export async function detectMonitors() {
+  const ext = loadExtDisplays();
+  if (ext) {
+    return {
+      ok: true,
+      source: 'ext',
+      screens: ext.map((m) => ({
+        resW: m.resW, resH: m.resH,
+        inch: m.inch, estimated: !!m.estimated,
+      })),
+    };
+  }
+
   if (!('getScreenDetails' in window)) return { ok: false, reason: 'unsupported' };
   try {
     const details = await window.getScreenDetails();
     return {
       ok: true,
+      source: 'web',
       screens: details.screens.map((sc) => {
         const dpr = sc.devicePixelRatio || 1;
-        return { resW: Math.round(sc.width * dpr), resH: Math.round(sc.height * dpr) };
+        const resW = Math.round(sc.width * dpr);
+        const resH = Math.round(sc.height * dpr);
+        return { resW, resH, inch: estimateInch(resW, resH, dpr), estimated: true };
       }),
     };
   } catch (e) {

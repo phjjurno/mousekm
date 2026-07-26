@@ -43,6 +43,8 @@ git add netlify.toml && git commit -m "allow framing from mousekm" && git push
 
 **웹스토어 등록(선택):** [Chrome Web Store 개발자 콘솔](https://chrome.google.com/webstore/devconsole)에서 1회 등록비 $5 결제 후 extension 폴더를 zip으로 업로드 → 심사(수일). 등록되면 사이트의 "Chrome에 추가" 버튼을 실제 스토어 링크로 교체.
 
+**모니터 감지:** 확장이 설치돼 있으면 `chrome.system.display`로 **대수·해상도·인치까지** 감지해 사이트에 전달합니다(사이트에서 「모니터 자동 감지」 클릭). 확장이 없으면 Window Management API로 대수·해상도만 정확히 읽고 인치는 해상도 기반으로 **추정**합니다(24″→23.9, 27″→26.9 수준의 오차).
+
 **참고:** 확장은 크롬 내부만 측정합니다. 크롬 밖(Word·카카오톡 등 OS 전체)은 데스크톱 앱(3차 계획)이 필요합니다. 팝업의 거리 환산은 24인치 기본 가정이며, 정밀 환산은 사이트의 모니터 설정을 따릅니다.
 
 ## 6. 호스팅
