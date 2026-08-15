@@ -1,0 +1,40 @@
+name: 플레이리스트 최신화
+
+# PULSE ORIGIN 채널에 새 롱폼이 올라오면 목록을 갱신해 커밋한다.
+# 커밋이 생기면 Netlify가 자동 배포 → 사이트 플레이리스트가 최신 상태가 된다.
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 6시간마다 (UTC)
+  workflow_dispatch:         # Actions 탭에서 수동 실행도 가능
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-playlist
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 채널 RSS에서 최신 롱폼 수집
+        run: node scripts/update-pulse-tracks.mjs
+
+      - name: 변경사항 커밋
+        run: |
+          if git diff --quiet -- data/pulse-tracks.json; then
+            echo "변경 없음 — 커밋 생략"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/pulse-tracks.json
+          git commit -m "chore: 플레이리스트 최신화 (PULSE ORIGIN)"
+          git push

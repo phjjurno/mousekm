@@ -169,13 +169,17 @@ export function initPlaylist() {
   $('#pl-now').innerHTML = `<b>${first.label}</b> — 측정을 시작하면 자동으로 재생돼요`;
   markActiveChip(first.id);
 
-  /* PULSE ORIGIN 채널의 최신 업로드로 목록 최신화 (실패 시 폴백 유지) */
+  /* PULSE ORIGIN 최신 업로드 목록 (GitHub Actions가 6시간마다 갱신·커밋) */
   (async () => {
     try {
-      const res = await fetch('/.netlify/functions/pulse-tracks', { cache: 'no-store' });
+      const res = await fetch('data/pulse-tracks.json', { cache: 'no-cache' });
       if (!res.ok) return;
       const list = await res.json();
-      if (Array.isArray(list) && list.length >= 3) { PULSE_TRACKS = list; renderPresets(); }
-    } catch { /* 로컬·오프라인 등 — 폴백 목록 유지 */ }
+      if (!Array.isArray(list) || list.length < 3) return;
+      const valid = list.filter((t) => t && typeof t.id === 'string' && typeof t.label === 'string');
+      if (valid.length < 3) return;
+      PULSE_TRACKS = valid;
+      renderPresets();
+    } catch { /* 오프라인 등 — 내장 목록 유지 */ }
   })();
 }
