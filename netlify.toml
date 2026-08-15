@@ -1,0 +1,16 @@
+[build]
+  publish = "."
+  command = ""
+  functions = "netlify/functions"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# 확장 소스는 캐시를 짧게 (개발자 모드 설치 시 최신 파일 확인)
+[[headers]]
+  for = "/extension/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
