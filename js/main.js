@@ -1,17 +1,18 @@
 // mousekm 메인 — 측정 엔진과 UI를 연결한다
-import { TRACKING } from './config.js?v=6';
-import { ARRIVAL_MESSAGES } from './routes.js?v=6';
-import { createTracker, STATUS } from './tracker.js?v=6';
-import { getJourney } from './journey.js?v=6';
-import { generateTitle } from './titleGenerator.js?v=6';
-import { loadThisWeek, loadLifetimeTotals, loadDay } from './storage.js?v=6';
-import { drawResultCard, downloadCard, pickShareLine } from './resultCard.js?v=6';
+import { TRACKING } from './config.js?v=7';
+import { ARRIVAL_MESSAGES } from './routes.js?v=7';
+import { createTracker, STATUS } from './tracker.js?v=7';
+import { getJourney } from './journey.js?v=7';
+import { generateTitle } from './titleGenerator.js?v=7';
+import { loadThisWeek, loadLifetimeTotals, loadDay } from './storage.js?v=7';
+import { drawResultCard, downloadCard, pickShareLine } from './resultCard.js?v=7';
 import {
   loadDisplay, saveDisplay, pxPerKm, conversionHint,
   detectMonitors, isMultiScreen, defaultMonitor, MONITOR_INCHES, MAX_MONITORS,
-} from './display.js?v=6';
-import { stairsInfo, fmtHeight, MOUNTAINS } from './stairs.js?v=6';
-import { initWall } from './wall.js?v=6';
+} from './display.js?v=7';
+import { stairsInfo, fmtHeight, MOUNTAINS } from './stairs.js?v=7';
+import { initWall } from './wall.js?v=7';
+import { initPlaylist, ensureMusic } from './playlist.js?v=7';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -323,6 +324,7 @@ function toggleTracking() {
   else {
     tracker.start();
     toast('기록을 시작했습니다. 서울역에서 출발합니다 🚉');
+    ensureMusic();   // 측정 시작과 함께 플레이리스트 자동 재생
   }
   render();
 }
@@ -542,3 +544,6 @@ setInterval(renderWeekly, 30_000);
 
 // 손끝 응원 방명록 (Firebase 익명) — 실패해도 사이트 나머지는 정상 동작
 initWall().catch(() => {});
+
+// 플레이리스트 (유튜브 임베드) — 측정 시작 시 자동 재생
+initPlaylist();

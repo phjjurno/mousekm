@@ -1,5 +1,5 @@
 // 종합 거리 → 여행 경로 변환
-import { ROUTES, START_NAME } from './routes.js?v=6';
+import { ROUTES, START_NAME } from './routes.js?v=7';
 
 // 현재 여행 상태 계산: 출발지·다음 목적지·구간 진행률·지나온 도시
 export function getJourney(travelKm) {

@@ -34,7 +34,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=6">
+<link rel="stylesheet" href="css/style.css?v=7">
 
 <!-- ═══ Google AdSense (자동 광고) ═══ -->
 <meta name="google-adsense-account" content="ca-pub-8501673409971666">
@@ -108,6 +108,7 @@
       <a href="#today">오늘의 기록</a>
       <a href="#journey">여행 지도</a>
       <a href="#wall">응원 게시판</a>
+      <a href="#playlist">플레이리스트</a>
       <a href="#weekly">주간 기록</a>
       <a href="#faq">FAQ</a>
       <a href="#privacy">개인정보</a>
@@ -293,6 +294,43 @@
       <li class="wall-empty">불러오는 중…</li>
     </ul>
     <p class="wall-note">※ 응원 메시지와 닉네임만 저장됩니다. 욕설·광고·전화번호 등 개인정보가 담긴 글은 <strong>자동으로 차단</strong>되며, 남더라도 예고 없이 삭제될 수 있습니다.</p>
+  </div>
+</section>
+
+<!-- ═══ 플레이리스트 ═══ -->
+<section id="playlist" class="container">
+  <div class="section-head">
+    <span class="eyebrow">PLAYLIST</span>
+    <h2>손끝 여행 플레이리스트</h2>
+    <p>측정을 시작하면 음악이 자동으로 재생돼요. 유튜브 링크를 붙여넣어 원하는 곡으로 바꿀 수도 있습니다.</p>
+  </div>
+  <div class="pl">
+    <div>
+      <div class="pl-player">
+        <iframe id="pl-frame" src="" title="YouTube 플레이어"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen></iframe>
+      </div>
+      <p class="pl-now" id="pl-now"></p>
+    </div>
+    <div class="pl-side">
+      <label class="pl-label-main" for="pl-input">
+        <svg class="pl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
+        </svg>
+        유튜브 링크 붙여넣기
+      </label>
+      <div class="pl-form">
+        <input id="pl-input" type="url" placeholder="https://www.youtube.com/watch?v=..." aria-label="유튜브 링크">
+        <button class="btn" id="pl-play" type="button">재생</button>
+      </div>
+      <p class="pl-error" id="pl-error" hidden>링크를 확인해주세요. 유튜브 영상/플레이리스트 주소만 재생할 수 있어요.</p>
+      <p class="pl-label">PULSEORIGN 추천
+        <button class="pl-link" id="pl-shuffle" type="button">🔀 랜덤 재생</button>
+      </p>
+      <div class="pl-presets" id="pl-presets"></div>
+      <p class="pl-tip">영상 주소(watch?v=…), 짧은 주소(youtu.be/…), 플레이리스트(list=…) 모두 지원해요.</p>
+    </div>
   </div>
 </section>
 
@@ -704,6 +742,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-<script type="module" src="js/main.js?v=6"></script>
+<script type="module" src="js/main.js?v=7"></script>
 </body>
 </html>

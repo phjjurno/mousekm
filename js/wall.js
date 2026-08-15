@@ -108,14 +108,15 @@ async function init() {
     return false;
   }
 
-  // 익명 로그인은 게시(쓰기)에만 필요 — 실패해도 읽기 구독은 진행한다
+  // 익명 로그인이 켜져 있으면 uid로 소유권을 확보해 '내 글 삭제'까지 가능해진다.
+  // 꺼져 있어도 규칙이 비로그인 작성을 허용하므로 글쓰기는 계속 동작한다.
   try {
     const cred = await firebase.auth().signInAnonymously();
     uid = cred.user?.uid || null;
-    ready = true;
   } catch {
-    ready = false; // 익명 로그인 미활성 등 → 읽기 전용 모드
+    uid = null; // 익명 로그인 미활성 — 비로그인 모드로 작성
   }
+  ready = true;
   return true;
 }
 
@@ -183,8 +184,8 @@ async function submit() {
   const check = filterContent(`${nick} ${text}`);
   if (!check.ok) { setStatus(check.reason, 'warn'); return; }
 
-  if (!ready || !uid) {
-    setStatus('응원 기능은 오픈 준비 중입니다. 읽기는 가능해요!', 'warn');
+  if (!ready || !db) {
+    setStatus('아직 준비 중이에요. 잠시 후 다시 시도해 주세요.', 'warn');
     return;
   }
 
@@ -198,12 +199,9 @@ async function submit() {
   const btn = $('#wall-submit');
   btn.disabled = true;
   try {
-    await db.collection(COLLECTION).add({
-      uid,
-      nickname: nick,
-      text,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
+    const doc = { nickname: nick, text, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+    if (uid) doc.uid = uid;   // 익명 로그인 시에만 소유권 기록 (본인 글 삭제용)
+    await db.collection(COLLECTION).add(doc);
     localStorage.setItem(NICK_KEY, nick);
     localStorage.setItem(LAST_POST_KEY, String(Date.now()));
     textEl.value = '';
@@ -250,6 +248,6 @@ export async function initWall() {
   const ok = await init();
   if (ok) {
     subscribe();
-    setStatus(ready ? '한 줄 응원을 남겨보세요.' : '지금은 읽기만 가능해요 (응원 기능 준비 중).');
+    setStatus('한 줄 응원을 남겨보세요.');
   }
 }
