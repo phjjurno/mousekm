@@ -1,0 +1,9 @@
+{
+  "name": "mousekm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "mousekm — 손끝으로 떠나는 전국 시·군 여행 (정적 사이트 + Netlify Functions)",
+  "engines": {
+    "node": ">=18"
+  }
+}
