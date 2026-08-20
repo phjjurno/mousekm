@@ -4,6 +4,10 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # wall.js 의 Firebase 웹 API 키는 공개용 클라이언트 키(도메인 허용목록·보안 규칙으로 보호)라
+  # 실제 비밀이 아니다. [functions] 를 켜면 빌드가 스캔 대상이 되는데,
+  # Netlify 비밀 스캐너가 이 키를 오탐해 빌드를 막는다. 서트레스와 동일하게 끈다.
+  SECRETS_SCAN_ENABLED = "false"
 
 [functions]
   directory = "netlify/functions"
