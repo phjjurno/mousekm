@@ -1,18 +1,18 @@
 // mousekm 메인 — 측정 엔진과 UI를 연결한다
-import { TRACKING } from './config.js?v=8';
-import { ARRIVAL_MESSAGES } from './routes.js?v=8';
-import { createTracker, STATUS } from './tracker.js?v=8';
-import { getJourney } from './journey.js?v=8';
-import { generateTitle } from './titleGenerator.js?v=8';
-import { loadThisWeek, loadLifetimeTotals, loadDay } from './storage.js?v=8';
-import { drawResultCard, downloadCard, pickShareLine } from './resultCard.js?v=8';
+import { TRACKING } from './config.js?v=9';
+import { ARRIVAL_MESSAGES } from './routes.js?v=9';
+import { createTracker, STATUS } from './tracker.js?v=9';
+import { getJourney } from './journey.js?v=9';
+import { generateTitle } from './titleGenerator.js?v=9';
+import { loadThisWeek, loadLifetimeTotals, loadDay } from './storage.js?v=9';
+import { drawResultCard, downloadCard, pickShareLine } from './resultCard.js?v=9';
 import {
   loadDisplay, saveDisplay, pxPerKm, conversionHint,
   detectMonitors, isMultiScreen, defaultMonitor, MONITOR_INCHES, MAX_MONITORS,
-} from './display.js?v=8';
-import { stairsInfo, fmtHeight, MOUNTAINS } from './stairs.js?v=8';
-import { initWall } from './wall.js?v=8';
-import { initPlaylist, ensureMusic } from './playlist.js?v=8';
+} from './display.js?v=9';
+import { stairsInfo, fmtHeight, MOUNTAINS } from './stairs.js?v=9';
+import { initWall } from './wall.js?v=9';
+import { initPlaylist, ensureMusic } from './playlist.js?v=9';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);

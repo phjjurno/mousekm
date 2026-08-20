@@ -169,17 +169,26 @@ export function initPlaylist() {
   $('#pl-now').innerHTML = `<b>${first.label}</b> — 측정을 시작하면 자동으로 재생돼요`;
   markActiveChip(first.id);
 
-  /* PULSE ORIGIN 최신 업로드 목록 (GitHub Actions가 6시간마다 갱신·커밋) */
+  /* PULSE ORIGIN 최신 롱폼 목록.
+     1순위: Netlify 함수(요청 시점의 채널 /videos 탭 — 쇼츠 없음)
+     2순위: data/pulse-tracks.json (GitHub Actions가 6시간마다 갱신·커밋)
+     둘 다 실패하면 위 내장 목록 유지. */
   (async () => {
-    try {
-      const res = await fetch('data/pulse-tracks.json', { cache: 'no-cache' });
-      if (!res.ok) return;
-      const list = await res.json();
-      if (!Array.isArray(list) || list.length < 3) return;
+    const pick = (list) => {
+      if (!Array.isArray(list) || list.length < 3) return null;
       const valid = list.filter((t) => t && typeof t.id === 'string' && typeof t.label === 'string');
-      if (valid.length < 3) return;
-      PULSE_TRACKS = valid;
-      renderPresets();
-    } catch { /* 오프라인 등 — 내장 목록 유지 */ }
+      return valid.length >= 3 ? valid : null;
+    };
+    for (const url of ['/.netlify/functions/pulse-tracks', 'data/pulse-tracks.json']) {
+      try {
+        const res = await fetch(url, { cache: 'no-cache' });
+        if (!res.ok) continue;
+        const valid = pick(await res.json());
+        if (!valid) continue;
+        PULSE_TRACKS = valid;
+        renderPresets();
+        return;
+      } catch { /* 다음 소스로 */ }
+    }
   })();
 }

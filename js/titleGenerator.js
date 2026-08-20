@@ -1,6 +1,6 @@
 // 오늘의 칭호 자동 부여 — 기록 패턴에 따라 카테고리를 정하고,
 // 날짜 기반 시드로 같은 날에는 같은 문구가 유지되게 한다.
-import { TITLES } from './titles.js?v=8';
+import { TITLES } from './titles.js?v=9';
 
 function seededIndex(seedStr, len) {
   let h = 0;

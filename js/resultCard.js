@@ -1,6 +1,6 @@
 // 오늘의 결과 공유 카드 — 캔버스로 이미지 생성 (개인정보 미포함)
-import { SHARE_LINES } from './titles.js?v=8';
-import { START_NAME } from './routes.js?v=8';
+import { SHARE_LINES } from './titles.js?v=9';
+import { START_NAME } from './routes.js?v=9';
 
 export const CARD_SIZES = {
   square: { w: 1080, h: 1080, label: '정사각형 1080×1080' },
