@@ -1,3 +1,12 @@
+> **2026-11 Cloudflare Pages 이전 메모**
+> Netlify 팀 크레딧 소진으로 사이트가 내려가 Cloudflare Pages 로 옮겼다(`main` 푸시 자동 배포,
+> Build command 비움, output `/`). Pages 는 `netlify/functions/` 를 실행하지 않으므로
+> 지금 플레이리스트는 `/.netlify/functions/pulse-tracks`(404) → **`data/pulse-tracks.json`**
+> (Actions 가 6시간마다 갱신) 순으로 동작한다. 로컬 미커밋 작업을 정리한 뒤
+> 함수를 `functions/api/pulse-tracks.js` 로 옮기고 `js/playlist.js` 의 경로를 `/api/pulse-tracks` 로
+> 바꾸면 요청 시점 최신화까지 복구된다(서트레스·MIST 와 같은 방식, Cache API 30분).
+> 그 뒤 `netlify.toml`, `netlify/` 는 지워도 된다.
+
 
 ## 7. 응원 게시판 · 플레이리스트 (2026-07-27 오픈)
 **게시판**: Firestore 규칙 배포 완료(`mousekm_wall`). 익명 로그인이 꺼져 있어도 형식 검증을 통과하면 글쓰기가 됩니다.
