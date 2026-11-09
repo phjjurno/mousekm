@@ -34,7 +34,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=9">
+<link rel="stylesheet" href="css/style.css?v=10">
 
 <!-- ═══ Google AdSense (자동 광고) ═══ -->
 <meta name="google-adsense-account" content="ca-pub-8501673409971666">
@@ -82,6 +82,11 @@
     },
     {
       "@type": "Question",
+      "name": "'모두의 손끝 여행'에는 무엇이 전송되나요?",
+      "acceptedAnswer": { "@type": "Answer", "text": "이번에 늘어난 이동 거리(km 숫자)와 오늘 처음 참여했는지 여부만 합산용으로 전송됩니다. 닉네임·기기 정보·키 입력 횟수는 보내지 않으며 모든 사람의 거리가 하나의 숫자로 더해질 뿐입니다." }
+    },
+    {
+      "@type": "Question",
       "name": "스크롤은 어떻게 계단·산으로 바뀌나요?",
       "acceptedAnswer": { "@type": "Answer", "text": "표준 계단 한 단 높이(175mm)와 1층=18단(3.15m) 기준으로 스크롤 거리를 층수로 환산합니다. 누적 높이가 남산(262m)·북한산·설악산·한라산(1950m) 등 국내 실제 산의 해발고도를 넘으면 완등으로 표시됩니다." }
     }
@@ -107,11 +112,11 @@
     <nav aria-label="주요 메뉴">
       <a href="#today">오늘의 기록</a>
       <a href="#journey">여행 지도</a>
+      <a href="#together">모두의 여행</a>
+      <a href="#badges">배지</a>
       <a href="#wall">응원 게시판</a>
       <a href="#playlist">플레이리스트</a>
-      <a href="#weekly">주간 기록</a>
       <a href="#faq">FAQ</a>
-      <a href="#privacy">개인정보</a>
     </nav>
     <div class="header-actions">
       <button class="btn btn-sm" data-chrome-cta aria-label="Chrome 확장프로그램 추가">Chrome에 추가</button>
@@ -124,6 +129,14 @@
 <section class="hero">
   <div class="hero-bg" aria-hidden="true"></div>
   <div class="container hero-inner">
+    <div class="challenge-banner" id="challenge-banner" role="region" aria-label="받은 도전장" hidden>
+      <span class="cb-emoji" aria-hidden="true">🏁</span>
+      <p id="challenge-text"></p>
+      <div class="cb-actions">
+        <button class="btn btn-sm" id="challenge-accept" type="button">도전 수락하고 측정 시작</button>
+        <button class="btn btn-sm btn-ghost" id="challenge-dismiss" type="button">다음에</button>
+      </div>
+    </div>
     <span class="eyebrow eyebrow-center">손끝으로 떠나는 전국 여행</span>
     <h1>오늘 당신의 마우스는<br><span class="grad">어디까지</span> 갈까요?</h1>
     <p class="sub">반복되는 키보드와 마우스 움직임을 실제 거리로 환산해<br>서울역에서 전국 시·군을 여행하는 게임입니다.</p>
@@ -139,6 +152,9 @@
       <li>✓ 입력 내용 미수집</li>
       <li>✓ 브라우저에만 저장</li>
     </ul>
+    <p class="hero-live" id="hero-live" aria-live="polite" hidden>
+      <span class="live-dot" aria-hidden="true"></span><span id="hero-live-text"></span>
+    </p>
     <p class="mobile-note" id="mobile-note" hidden>
       모바일에서는 기록 결과를 확인할 수 있습니다.<br>
       전체 측정 기능은 데스크톱 Chrome에서 사용할 수 있습니다.
@@ -216,6 +232,17 @@
     <button class="btn btn-ghost" id="btn-reset" aria-label="오늘 기록 초기화">기록 초기화</button>
   </div>
 
+  <!-- 받은 도전장 진행도 -->
+  <div class="card challenge-progress" id="challenge-progress" hidden>
+    <div class="cp-head">
+      <strong id="cp-title">🏁 도전 중</strong>
+      <button class="cp-close" id="cp-close" type="button" aria-label="도전 그만두기">✕</button>
+    </div>
+    <div class="cp-bar"><div class="cp-fill" id="cp-fill"></div></div>
+    <div class="cp-meta"><span id="cp-now">오늘 0m</span><span id="cp-left"></span></div>
+    <button class="btn btn-sm" id="cp-send" type="button" hidden>🏁 이번엔 내가 도전장 보내기</button>
+  </div>
+
   <!-- 모니터 설정: 픽셀 → 실제 거리 환산 기준 -->
   <div class="card settings-card">
     <div class="settings-head">
@@ -257,6 +284,35 @@
   </div>
 </section>
 
+<!-- ═══ 모두의 손끝 여행 ═══ -->
+<section id="together" class="container" data-state="loading">
+  <div class="section-head">
+    <span class="eyebrow">TOGETHER</span>
+    <h2>모두의 손끝 여행</h2>
+    <p>mousekm를 켠 모든 사람의 이동 거리를 하나로 합쳐 함께 전국을 몇 바퀴 도는지 기록해요. 보내는 건 늘어난 거리 숫자뿐입니다.</p>
+  </div>
+  <div class="card together-card">
+    <p class="journey-sentence" id="tg-sentence">모두의 여행 기록을 불러오는 중…</p>
+    <div class="journey-track together-track" role="img" aria-label="모두의 여행 진행도">
+      <div class="journey-fill together-fill" id="tg-fill" style="width:0%"></div>
+      <div class="journey-pin" id="tg-pin" style="left:0%">👥</div>
+    </div>
+    <div class="journey-ends">
+      <span id="tg-from">서울역</span>
+      <span id="tg-to">구리</span>
+    </div>
+    <p class="together-remain" id="tg-remain"></p>
+    <div class="together-stats">
+      <div class="tg-stat"><span class="tg-label">오늘 함께한 사람</span><strong id="tg-today-travelers">-</strong></div>
+      <div class="tg-stat"><span class="tg-label">오늘 모두의 거리</span><strong id="tg-today-km">-</strong></div>
+      <div class="tg-stat"><span class="tg-label">누적 참여</span><strong id="tg-all-travelers">-</strong></div>
+      <div class="tg-stat"><span class="tg-label">누적 거리</span><strong id="tg-all-km">-</strong></div>
+      <div class="tg-stat tg-mine"><span class="tg-label">내가 보탠 거리</span><strong id="tg-mine">-</strong><span class="tg-sub" id="tg-mine-share"></span></div>
+    </div>
+    <p class="conversion-note" id="tg-status">불러오는 중…</p>
+  </div>
+</section>
+
 <!-- ═══ 오늘의 칭호 ═══ -->
 <section class="container">
   <div class="card title-card">
@@ -265,14 +321,35 @@
   </div>
 </section>
 
+<!-- ═══ 나의 여행 배지 ═══ -->
+<section id="badges" class="container">
+  <div class="section-head">
+    <span class="eyebrow">BADGES</span>
+    <h2>나의 여행 배지</h2>
+    <p>매일 조금씩 여행하면 연속 기록과 배지가 쌓여요. 배지는 이 브라우저에만 저장됩니다.</p>
+  </div>
+  <div class="badges-wrap">
+    <div class="card streak-card">
+      <span class="streak-flame" aria-hidden="true">🔥</span>
+      <div class="streak-num"><strong id="streak-count">0</strong><span>일 연속</span></div>
+      <p class="streak-hint" id="streak-hint">오늘 조금이라도 여행하면 연속 기록이 시작돼요</p>
+    </div>
+    <div class="card badge-card">
+      <div class="badge-head"><span>모은 배지</span><strong id="badge-count">0</strong></div>
+      <ul class="badge-grid" id="badge-grid"></ul>
+    </div>
+  </div>
+</section>
+
 <!-- ═══ 손끝 응원 방명록 ═══ -->
 <section id="wall" class="container">
   <div class="section-head">
     <span class="eyebrow">COMMUNITY</span>
     <h2>손끝 응원 방명록</h2>
-    <p>오늘도 책상 앞을 여행 중인 서로에게 한 줄 응원을 남겨보세요. 익명으로 누구나 참여할 수 있어요.</p>
+    <p>오늘도 책상 앞을 여행 중인 서로에게 한 줄 응원을 남기고, 누가 어디에 도착했는지 실시간으로 확인해 보세요.</p>
   </div>
   <div class="card wall-card">
+    <p class="wall-live" id="wall-live" hidden></p>
     <form id="wall-form" class="wall-form" autocomplete="off">
       <div class="wall-inputs">
         <input id="wall-nick" class="wall-nick-input" type="text" maxlength="12"
@@ -285,6 +362,10 @@
         <span id="wall-status" class="wall-status">불러오는 중…</span>
         <span id="wall-counter" class="wall-counter">0/100</span>
       </div>
+      <label class="wall-autoshare">
+        <input type="checkbox" id="wall-autoshare">
+        <span>새 도시 도착·산 완등 소식을 게시판에 자동으로 알리기 <em>(닉네임과 장소 이름만)</em></span>
+      </label>
     </form>
     <div class="wall-list-head">
       <span>최근 응원</span>
@@ -293,7 +374,7 @@
     <ul id="wall-list" class="wall-list" aria-live="polite">
       <li class="wall-empty">불러오는 중…</li>
     </ul>
-    <p class="wall-note">※ 응원 메시지와 닉네임만 저장됩니다. 욕설·광고·전화번호 등 개인정보가 담긴 글은 <strong>자동으로 차단</strong>되며, 남더라도 예고 없이 삭제될 수 있습니다.</p>
+    <p class="wall-note">※ 응원 메시지·닉네임, 그리고 공유를 선택한 도착·완등 장소 이름만 저장됩니다. 마음에 드는 글엔 🤍를 눌러 공감해 주세요. 욕설·광고·전화번호 등 개인정보가 담긴 글은 <strong>자동으로 차단</strong>되며, 남더라도 예고 없이 삭제될 수 있습니다.</p>
   </div>
 </section>
 
@@ -307,9 +388,13 @@
   <div class="pl">
     <div>
       <div class="pl-player">
-        <iframe id="pl-frame" src="" title="YouTube 플레이어"
+        <iframe id="pl-frame" title="YouTube 플레이어"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen></iframe>
+        <button class="pl-facade" id="pl-facade" type="button" aria-label="대기 곡 재생" hidden>
+          <img id="pl-thumb" alt="" decoding="async">
+          <span class="pl-facade-play" aria-hidden="true"></span>
+        </button>
       </div>
       <p class="pl-now" id="pl-now"></p>
     </div>
@@ -423,6 +508,14 @@
     <details class="faq-item">
       <summary>여행 지도는 왜 천천히 움직이나요?</summary>
       <p>거리를 실제 물리 단위로 정직하게 환산하기 때문입니다. 여행 지도는 매일의 기록을 합산한 <strong>누적 거리</strong>로 전국을 도는 장기 여행이라, 며칠·몇 주에 걸쳐 다음 도시에 도착하게 됩니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>'모두의 손끝 여행'에는 무엇이 전송되나요?</summary>
+      <p>이번에 늘어난 이동 거리(km 숫자)와 '오늘 처음 참여했는지' 여부만 합산용으로 전송됩니다. 닉네임·기기 정보·키 입력 횟수는 보내지 않으며, 모든 사람의 거리가 하나의 숫자로 더해질 뿐 개인별 기록은 남지 않습니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>도전장은 어떻게 보내나요?</summary>
+      <p>「결과 보기」에서 「친구에게 도전장 보내기」를 누르면 오늘 거리와 현재 구간이 담긴 링크가 만들어져요. 친구가 링크를 열고 도전을 수락하면, 그날 내 거리를 넘는 순간 승리 알림과 배지를 받습니다. 링크 내용은 서버에 저장되지 않습니다.</p>
     </details>
   </div>
 </section>
@@ -578,9 +671,16 @@
       <button class="btn btn-sm" data-card-size="story">1080×1920</button>
       <button class="btn btn-sm" data-card-size="wide">1200×630</button>
     </div>
+    <div class="challenge-send">
+      <label for="challenge-nick">친구에게 도전장 보내기 <span>— 오늘 내 거리를 넘어보라고 링크를 보내요</span></label>
+      <div class="challenge-send-row">
+        <input id="challenge-nick" type="text" maxlength="12" placeholder="도전장에 쓸 닉네임" autocomplete="nickname">
+        <button class="btn" id="btn-challenge" type="button">🏁 도전장 보내기</button>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" data-close>닫기</button>
-      <button class="btn" id="btn-download-card">이미지로 저장</button>
+      <button class="btn btn-ghost" id="btn-download-card">이미지로 저장</button>
     </div>
   </div>
 </div>
@@ -589,7 +689,7 @@
 <div class="modal-backdrop" id="modal-privacy" role="dialog" aria-modal="true" aria-label="개인정보처리방침">
   <div class="modal modal-wide legal">
     <h3>개인정보처리방침</h3>
-    <p class="legal-updated">시행일: 2026년 7월 17일 · 최종 개정: 2026년 7월 17일</p>
+    <p class="legal-updated">시행일: 2026년 7월 17일 · 최종 개정: 2026년 9월 13일</p>
 
     <p>mousekm(이하 "서비스")는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 등 관련 법령을 준수합니다. 본 방침은 서비스가 어떤 정보를 어떻게 다루는지 투명하게 안내하기 위한 것입니다.</p>
 
@@ -602,7 +702,9 @@
       <li>마우스·스크롤 <strong>이동량(픽셀)</strong> 및 이를 환산한 거리·층수·해발고도</li>
       <li>활동 시간·비활성 시간, 날짜별 통계</li>
       <li>이용자가 직접 설정한 모니터 크기(인치)·해상도 정보</li>
-      <li>응원 방명록 이용 시: 이용자가 직접 입력한 <strong>닉네임과 한 줄 메시지</strong>, 익명 식별자(중복 방지·본인 글 삭제 목적)</li>
+      <li>응원 방명록 이용 시: 이용자가 직접 입력한 <strong>닉네임과 한 줄 메시지</strong>, 이용자가 공유를 선택한 <strong>도착 도시·완등한 산 이름</strong>, 공감 수, 익명 식별자(익명 로그인이 켜진 경우, 본인 글 삭제 목적)</li>
+      <li>'모두의 손끝 여행' 합산: 새로 늘어난 <strong>이동 거리(km) 숫자</strong>와 당일 첫 참여 여부. 닉네임·기기 정보와 연결되지 않으며 전체 합계로만 저장됩니다</li>
+      <li>도전장 링크: 이용자가 직접 보낼 때에 한해 닉네임·오늘 거리·현재 구간이 <strong>링크 주소 안에만</strong> 담기며 서버에 저장되지 않습니다</li>
     </ul>
 
     <h4>3. 수집하지 않는 정보</h4>
@@ -614,19 +716,20 @@
     </ul>
 
     <h4>4. 저장 위치 및 보관 기간</h4>
-    <p>측정 기록은 서버로 전송되지 않고 이용자의 브라우저(localStorage)에만 저장되며, 이용자가 삭제하기 전까지 보관됩니다. 응원 방명록에 남긴 글은 서비스가 이용하는 클라우드 데이터베이스(Google Firebase, 리전: 서울)에 저장되며, 이용자 본인 또는 운영자가 삭제하기 전까지 보관됩니다.</p>
+    <p>측정 기록은 서버로 전송되지 않고 이용자의 브라우저(localStorage)에만 저장되며, 이용자가 삭제하기 전까지 보관됩니다. 응원 방명록에 남긴 글·소식과 '모두의 손끝 여행' 합계는 서비스가 이용하는 클라우드 데이터베이스(Google Firebase, 리전: 서울)에 저장되며, 방명록 글은 운영자가 삭제하기 전까지, 합계 수치는 서비스 운영 기간 동안 보관됩니다. 배지·연속 기록·받은 도전장 정보는 이용자의 브라우저에만 저장됩니다.</p>
 
     <h4>5. 처리 위탁 및 제3자 제공</h4>
     <p>서비스는 수집한 정보를 이용자의 동의 없이 제3자에게 제공·판매하지 않습니다. 다만 방명록 기능 제공을 위해 아래 사업자에 데이터 처리를 위탁합니다.</p>
     <ul>
-      <li><strong>Google Firebase</strong>(Google LLC): 방명록 데이터 저장 및 익명 인증</li>
+      <li><strong>Google Firebase</strong>(Google LLC): 방명록·모두의 여행 합계 저장 및 익명 인증</li>
+      <li><strong>YouTube</strong>(Google LLC): 플레이리스트 재생 시 임베드 플레이어 제공 — 재생 버튼을 누르기 전에는 플레이어를 불러오지 않습니다</li>
     </ul>
 
     <h4>6. 쿠키 및 광고</h4>
     <p>서비스는 원활한 이용을 위해 로컬 저장소(localStorage)를 사용합니다. 또한 Google AdSense를 통한 광고가 게재될 수 있으며, 이 과정에서 Google 및 광고 파트너가 쿠키를 사용해 이용자의 관심 기반 광고를 제공할 수 있습니다. 이용자는 <a href="https://adssettings.google.com" target="_blank" rel="noopener">Google 광고 설정</a>에서 맞춤 광고를 해제할 수 있습니다.</p>
 
     <h4>7. 이용자의 권리</h4>
-    <p>이용자는 언제든지 자신의 기록을 열람·삭제할 수 있습니다. 화면의 「기록 초기화」 버튼으로 오늘 기록을, 브라우저의 사이트 데이터 삭제로 전체 측정 기록을 삭제할 수 있습니다. 방명록 글은 본인이 작성한 글의 「삭제」 버튼으로 지울 수 있습니다.</p>
+    <p>이용자는 언제든지 자신의 기록을 열람·삭제할 수 있습니다. 화면의 「기록 초기화」 버튼으로 오늘 기록을, 브라우저의 사이트 데이터 삭제로 전체 측정 기록을 삭제할 수 있습니다. 방명록 글은 본인이 작성한 글의 「삭제」 버튼(익명 로그인이 켜진 경우) 또는 운영자 문의(vspo2@yonsei.ac.kr)로 삭제할 수 있습니다. 도착·완등 소식 자동 공유는 방명록의 설정 체크박스로 언제든 끌 수 있습니다.</p>
 
     <h4>8. 아동의 개인정보</h4>
     <p>서비스는 만 14세 미만 아동을 주요 대상으로 하지 않으며, 아동의 개인정보를 고의로 수집하지 않습니다.</p>
@@ -735,13 +838,13 @@
   </div>
 </div>
 
-<div id="toast" role="status" aria-live="polite"></div>
+<div id="toast" role="status" aria-live="polite"><span id="toast-msg"></span><button id="toast-action" type="button" hidden></button></div>
 
 <!-- ═══ Firebase (방명록용, compat SDK) ═══ -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-<script type="module" src="js/main.js?v=9"></script>
+<script type="module" src="js/main.js?v=10"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 /* ============================================================
    mousekm — PULSE ORIGIN 최신 롱폼 업로드 자동 수집
    쇼츠를 빼고 롱폼만 [{id,label}] JSON 으로 내려준다. API 키 불필요.
-   프론트(js/playlist.js)가 이걸 먼저 부르고, 실패하면 data/pulse-tracks.json 을 쓴다.
+   Cloudflare Pages Function(/api/pulse-tracks). 프론트(js/playlist.js)가 이걸 먼저 부르고, 실패하면 data/pulse-tracks.json 을 쓴다.
 
    소스 순서:
    1) 채널 '동영상(/videos)' 탭 — 쇼츠는 별도 탭이라 애초에 안 섞인다 (주력)
@@ -23,7 +23,6 @@ const HEADERS = { 'User-Agent': UA, 'Accept-Language': 'ko,en;q=0.8', 'Cookie': 
 const FALLBACK = [
   { id: '9E40d1donW4', label: '분위기 좋은 편집샵 재즈 힙합 🎷' },
   { id: 'N7XS4HasGk4', label: 'Late Night Jazz Hip Hop ☕' },
-  { id: 'bAQlnYFfscE', label: 'Smooth R&B & Soul Mix' },
   { id: 'uVDR99PBFlg', label: '위험하게 분위기 좋은 둠칫 플리' },
   { id: 'G5PYccAFx3A', label: '걷다가 기분 좋아지는 도시팝 🚦' }
 ];
@@ -38,13 +37,20 @@ function decodeEntities(s) {
 
 /* 해시태그·장식 문자 정리 + 길이 제한 */
 function cleanLabel(t) {
+  // 유튜브 제목은 한글이 풀어쓴 자모(NFD)로 오기도 한다 → 먼저 NFC로 합쳐야
+  // 글자 수가 제대로 세지고, 자른 자리에 'ᄀ' 같은 자모 조각이 남지 않는다
   let s = decodeEntities(t)
+    .normalize('NFC')
     .replace(/⁽[^⁾]*⁾/g, ' ')        // ⁽ᴾˡᵃʸˡⁱˢᵗ⁾ 같은 위첨자 장식 제거
     .replace(/[#＃][^\s#＃]+/g, ' ')  // 해시태그 제거
     .replace(/[|｜·・]+/g, ' ')       // 구분자 정리
     .replace(/\s+/g, ' ')
     .trim();
-  if (s.length > 40) s = s.slice(0, 39).trim() + '…';
+  // 이모지·결합 문자가 반쪽 나지 않게 '보이는 글자(grapheme)' 단위로 자른다
+  const chars = typeof Intl !== 'undefined' && Intl.Segmenter
+    ? [...new Intl.Segmenter('ko', { granularity: 'grapheme' }).segment(s)].map((x) => x.segment)
+    : [...s];
+  if (chars.length > 40) s = chars.slice(0, 39).join('').trim() + '…';
   return s;
 }
 
@@ -150,14 +156,32 @@ async function collect() {
   return merged.length ? merged : FALLBACK;
 }
 
-exports.handler = async () => {
-  const headers = {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Cache-Control': 'public, max-age=1800, s-maxage=1800'  // 30분 캐시
-  };
-  try {
-    return { statusCode: 200, headers, body: JSON.stringify(await collect()) };
-  } catch (e) {
-    return { statusCode: 200, headers, body: JSON.stringify(FALLBACK) };
-  }
-};
+/* ---------- Cloudflare Pages Function: GET /api/pulse-tracks ----------
+   Netlify는 함수 응답을 CDN이 Cache-Control 대로 캐시해 줬지만,
+   Pages Functions 는 매 요청마다 실행된다. 방문마다 유튜브를 긁으면
+   차단당할 수 있으니 Cache API 로 30분간 엣지에 보관한다. */
+const CACHE_SECONDS = 1800;
+
+function json(list) {
+  return new Response(JSON.stringify(list), {
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': `public, max-age=${CACHE_SECONDS}`
+    }
+  });
+}
+
+export async function onRequestGet(context) {
+  const cache = caches.default;
+  const key = new Request(new URL('/api/pulse-tracks', context.request.url).toString());
+
+  const hit = await cache.match(key);
+  if (hit) return hit;
+
+  let list;
+  try { list = await collect(); } catch (e) { list = FALLBACK; }
+
+  const res = json(list);
+  context.waitUntil(cache.put(key, res.clone()));
+  return res;
+}

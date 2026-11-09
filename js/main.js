@@ -1,27 +1,35 @@
 // mousekm 메인 — 측정 엔진과 UI를 연결한다
-import { TRACKING } from './config.js?v=9';
-import { ARRIVAL_MESSAGES } from './routes.js?v=9';
-import { createTracker, STATUS } from './tracker.js?v=9';
-import { getJourney } from './journey.js?v=9';
-import { generateTitle } from './titleGenerator.js?v=9';
-import { loadThisWeek, loadLifetimeTotals, loadDay } from './storage.js?v=9';
-import { drawResultCard, downloadCard, pickShareLine } from './resultCard.js?v=9';
+import { TRACKING } from './config.js?v=10';
+import { ARRIVAL_MESSAGES } from './routes.js?v=10';
+import { createTracker, STATUS } from './tracker.js?v=10';
+import { getJourney } from './journey.js?v=10';
+import { generateTitle } from './titleGenerator.js?v=10';
+import { loadThisWeek, loadPastTotals, invalidatePastTotals, loadActiveDayKeys } from './storage.js?v=10';
+import { drawResultCard, downloadCard, pickShareLine } from './resultCard.js?v=10';
 import {
   loadDisplay, saveDisplay, pxPerKm, conversionHint,
   detectMonitors, isMultiScreen, defaultMonitor, MONITOR_INCHES, MAX_MONITORS,
-} from './display.js?v=9';
-import { stairsInfo, fmtHeight, MOUNTAINS } from './stairs.js?v=9';
-import { initWall } from './wall.js?v=9';
-import { initPlaylist, ensureMusic } from './playlist.js?v=9';
+} from './display.js?v=10';
+import { stairsInfo, fmtHeight, MOUNTAINS } from './stairs.js?v=10';
+import { initWall, shareMilestone, isAutoShare, hasPosted, filterContent } from './wall.js?v=10';
+import { initPlaylist, ensureMusic } from './playlist.js?v=10';
+import { initCommunity, contributeNow } from './community.js?v=10';
+import { evaluateBadges, computeStreak, BADGES } from './achievements.js?v=10';
+import {
+  buildChallengeUrl, readChallengeFromUrl, clearChallengeFromUrl, saveTarget, loadTarget,
+  markTargetWon, clearTarget, shareChallenge, hasShared, hasWon,
+} from './challenge.js?v=10';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
+const NICK_KEY = 'mousekm.wall.nick';
+
 const tracker = createTracker();
 let display  = loadDisplay();
 let kmRate   = pxPerKm(display);
-let lastArrivedCount = null;
-let lastClimbedCount = 0;   // 새 산 완등 감지용
+let lastArrivedCount = null;   // null = 아직 기준값 없음(첫 렌더에서 알림 없이 기준만 잡는다)
+let lastClimbedCount = null;
 
 // ── 포맷 헬퍼 ──
 const fmtInt  = (n) => Math.round(n).toLocaleString();
@@ -37,24 +45,62 @@ function fmtTime(sec) {
   const m = Math.floor((sec % 3600) / 60);
   return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
 }
+// 받침에 맞는 조사 (구리를 / 강릉을)
+function eulReul(word) {
+  const ch = String(word).slice(-1).charCodeAt(0);
+  if (ch < 0xac00 || ch > 0xd7a3) return '을(를)';
+  return (ch - 0xac00) % 28 ? '을' : '를';
+}
+function savedNick() {
+  try {
+    const n = (localStorage.getItem(NICK_KEY) || '').trim();
+    return n && filterContent(n).ok ? n : '';
+  } catch { return ''; }
+}
 
-// ── 토스트 ──
+// ── 토스트 (선택적으로 버튼 하나) ──
 let toastTimer = null;
-function toast(msg) {
+function toast(msg, action) {
   const el = $('#toast');
-  el.textContent = msg;
+  const text = $('#toast-msg');
+  const btn = $('#toast-action');
+  text.textContent = msg;
+  if (action) {
+    btn.textContent = action.label;
+    btn.hidden = false;
+    btn.onclick = () => { el.classList.remove('show'); action.onClick(); };
+  } else {
+    btn.hidden = true;
+    btn.onclick = null;
+  }
+  el.classList.toggle('has-action', !!action);
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
+  toastTimer = setTimeout(() => el.classList.remove('show'), action ? 8000 : 4000);
 }
 
 // ── 모달 ──
+function cleanupEmbed() { const f = $('#embed-frame'); if (f) f.src = 'about:blank'; }
 function openModal(id) { $(id).classList.add('open'); }
-function closeModal(el) { el.closest('.modal-backdrop').classList.remove('open'); }
+function closeModal(el) {
+  const bg = el.closest('.modal-backdrop');
+  bg.classList.remove('open');
+  if (bg.id === 'modal-embed') cleanupEmbed();
+}
 $$('.modal-backdrop').forEach((bg) => {
-  bg.addEventListener('click', (e) => { if (e.target === bg) bg.classList.remove('open'); });
+  bg.addEventListener('click', (e) => {
+    if (e.target !== bg) return;
+    bg.classList.remove('open');
+    if (bg.id === 'modal-embed') cleanupEmbed();
+  });
 });
 $$('[data-close]').forEach((btn) => btn.addEventListener('click', () => closeModal(btn)));
+// ESC로 맨 위 모달 닫기 (예전엔 키보드로 닫을 방법이 없었음)
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const open = [...$$('.modal-backdrop.open')].pop();
+  if (open) closeModal(open.firstElementChild || open);
+});
 
 // ── 상태 표시 ──
 function statusLabel() {
@@ -79,15 +125,30 @@ function updateControls() {
   }
 }
 
+// ── 도착·완등 소식 공유 ──
+async function announceMilestone(type, place, message) {
+  if (isAutoShare()) {
+    const r = await shareMilestone(type, place);
+    toast(r === 'ok' ? `${message}\n게시판에도 소식을 전했어요.` : message);
+    return;
+  }
+  toast(message, {
+    label: '게시판에 자랑하기',
+    onClick: async () => {
+      const r = await shareMilestone(type, place);
+      const msg = { ok: '응원 게시판에 소식을 올렸어요! 🙌', dup: '이미 공유한 소식이에요.', cooldown: '잠시 후 다시 공유할 수 있어요.', fail: '공유에 실패했어요. 잠시 후 다시 시도해 주세요.' }[r];
+      toast(msg);
+    },
+  });
+}
+
 // ── 계단·산 툴팁 업데이트 ──
 function updateMountainTip(stairs) {
   const { heightM, steps, floors, climbed, next } = stairs;
 
-  // 카드 내 1차 정보
   $('#stat-scroll').textContent    = floors > 0 ? `${floors.toLocaleString()}층` : `${steps}계단`;
   $('#stat-scroll-sub').textContent = `${steps.toLocaleString()}계단 · ${fmtHeight(heightM)}`;
 
-  // 완등 배지 (최근 완등 산 표시)
   const summitEl = $('#stairs-summit');
   if (climbed.length > 0) {
     const last = climbed[climbed.length - 1];
@@ -96,14 +157,17 @@ function updateMountainTip(stairs) {
     summitEl.textContent = '';
   }
 
-  // 새 산 완등 감지 → 토스트
-  if (climbed.length > lastClimbedCount) {
+  // 새 산 완등 감지 → 토스트 (첫 렌더는 기준만 잡아 새로고침마다 같은 알림이 반복되지 않게)
+  if (lastClimbedCount === null) {
+    lastClimbedCount = climbed.length;
+  } else if (climbed.length > lastClimbedCount) {
     const newMt = climbed[climbed.length - 1];
-    toast(`${newMt.emoji} ${newMt.name} 완등! (해발 ${newMt.height}m)\n${newMt.note}`);
+    lastClimbedCount = climbed.length;
+    announceMilestone('summit', newMt.name, `${newMt.emoji} ${newMt.name} 완등! (해발 ${newMt.height}m)\n${newMt.note}`);
+  } else if (climbed.length < lastClimbedCount) {
     lastClimbedCount = climbed.length;
   }
 
-  // 툴팁 상세
   if (next) {
     const pct = Math.min(100, heightM / next.height * 100);
     $('#mt-emoji').textContent  = next.emoji;
@@ -114,7 +178,6 @@ function updateMountainTip(stairs) {
     $('#mt-target').textContent =
       `현재 ${fmtHeight(heightM)} / ${next.name} 정상 ${next.height}m · 남은 거리 ${fmtHeight(next.height - heightM)}`;
   } else {
-    // 한라산까지 모두 완등
     $('#mt-emoji').textContent  = '🌋';
     $('#mt-title').textContent  = '모든 산 완등!';
     $('#mt-sub').textContent    = '한라산 정상까지 올랐습니다';
@@ -123,67 +186,71 @@ function updateMountainTip(stairs) {
     $('#mt-target').textContent = `총 ${fmtHeight(heightM)} 등반`;
   }
 
-  // 완등 목록
-  $('#mt-climbed-list').innerHTML = MOUNTAINS.map((m) => {
+  const listHtml = MOUNTAINS.map((m) => {
     const done = climbed.some((c) => c.name === m.name);
-    return `<span class="mt-climbed-chip${done ? ' done' : ''}" title="${m.height}m">
-      ${done ? '✓' : '○'} ${m.name}
-    </span>`;
+    return `<span class="mt-climbed-chip${done ? ' done' : ''}" title="${m.height}m">${done ? '✓' : '○'} ${m.name}</span>`;
   }).join('');
+  const listEl = $('#mt-climbed-list');
+  if (listEl.dataset.sig !== String(climbed.length)) {    // 바뀔 때만 다시 그림
+    listEl.innerHTML = listHtml;
+    listEl.dataset.sig = String(climbed.length);
+  }
 }
 
 // ── 터치 디바이스: 탭으로 툴팁 토글 ──
-$('#stairs-card')?.addEventListener('click', (e) => {
+$('#stairs-card')?.addEventListener('click', () => {
   if (!window.matchMedia('(pointer:coarse)').matches) return;
   $('#stairs-card').classList.toggle('tip-open');
 });
 
-// 크롬 확장이 남긴 누적 기록(px) — 확장 브리지가 localStorage('mousekm.ext.v1')에 기록
-// (확장은 mousekm 사이트 자체를 측정하지 않으므로 이중 합산 없음)
-function extLifetimePx() {
+// 크롬 확장이 남긴 기록 — 확장 브리지가 localStorage('mousekm.ext.v1')에 기록.
+// (확장은 mousekm 사이트 자체를 측정하지 않으므로 이중 합산 없음) 매 렌더 파싱을 피하려 5초 캐시.
+let extCache = { at: 0, px: 0, activeKeys: [] };
+function readExt() {
+  if (Date.now() - extCache.at < 5000) return extCache;
+  let px = 0;
+  const activeKeys = [];
   try {
     const ext = JSON.parse(localStorage.getItem('mousekm.ext.v1'));
-    let sum = 0;
     for (const k in (ext?.days || {})) {
       const d = ext.days[k];
-      sum += (d.mousePx || 0) + (d.scrollPx || 0);
+      const dayPx = (d.mousePx || 0) + (d.scrollPx || 0);
+      px += dayPx;
+      if (dayPx > 0 || (d.keys || 0) > 0) activeKeys.push(k);
     }
-    return sum;
-  } catch { return 0; }
+  } catch { /* noop */ }
+  extCache = { at: Date.now(), px, activeKeys };
+  return extCache;
 }
+const extLifetimePx = () => readExt().px;
 
-// 누적(평생) 여행 거리 — 저장된 모든 날짜 + 오늘의 실시간 상태 + 확장 기록
+// 누적(평생) 여행 거리 — 지난 날짜 합계(캐시) + 오늘의 실시간 상태 + 확장 기록
 function lifetimeTravelKm() {
-  const totals = loadLifetimeTotals();               // 오늘의 '저장된' 스냅샷 포함
-  const saved  = loadDay(tracker.dateKey);           // 오늘의 저장 스냅샷
-  const live   = tracker.state;
-  const mousePx  = totals.mousePx  - (saved.mouseDistancePixels  || 0) + live.mouseDistancePixels;
-  const scrollPx = totals.scrollPx - (saved.scrollDistancePixels || 0) + live.scrollDistancePixels;
-  return toKm(mousePx + scrollPx + extLifetimePx());
+  const past = loadPastTotals(tracker.dateKey);
+  const s = tracker.state;
+  return toKm(past.mousePx + past.scrollPx + s.mouseDistancePixels + s.scrollDistancePixels + extLifetimePx());
 }
 
 // ── 실시간 대시보드 렌더 ──
 function render() {
   const s        = tracker.state;
   const mouseKm  = toKm(s.mouseDistancePixels);
-  const scrollM  = toKm(s.scrollDistancePixels) * 1000; // km → m
+  const scrollM  = toKm(s.scrollDistancePixels) * 1000;
   const todayKm  = mouseKm + toKm(s.scrollDistancePixels);
-  const travelKm = lifetimeTravelKm();               // 여행 지도는 누적 거리 기준
+  const travelKm = lifetimeTravelKm();
 
   $('#stat-keys').textContent   = `${fmtInt(s.keyCount)}타`;
   $('#stat-mouse').textContent  = fmtDist(mouseKm);
   $('#stat-clicks').textContent = `${fmtInt(s.clickCount)}회`;
   $('#stat-time').textContent   = fmtTime(s.activeSeconds);
 
-  // 계단 & 산
   updateMountainTip(stairsInfo(scrollM));
 
-  // 위젯
   $('#widget-keys').textContent   = `⌨ ${fmtInt(s.keyCount)}`;
   $('#widget-mouse').textContent  = `🖱 ${fmtDist(mouseKm)}`;
   $('#widget-clicks').textContent = `👆 ${fmtInt(s.clickCount)}`;
 
-  // 여행 지도 (누적 거리 기준 — 전국 시·군을 천천히 순회)
+  // 여행 지도 (누적 거리 기준)
   const j = getJourney(travelKm);
   $('#journey-from').textContent    = j.fromName;
   $('#journey-to').textContent      = j.finished ? '🎉 전국 완주!' : j.toName;
@@ -195,36 +262,45 @@ function render() {
     ? '서울역에서 인천공항까지 전국 완주!'
     : `${j.toName}까지 ${fmtDist(j.remainKm)} 남음 · 오늘 +${fmtDist(todayKm)}`;
   $('#journey-sentence').innerHTML  = j.finished
-    ? `당신의 손끝이 <strong>서울역</strong>에서 출발해<br><strong>전국 시·군</strong>을 완주했습니다.`
-    : `당신의 손끝은 지금<br><strong>${j.fromName}</strong>을(를) 지나 <strong>${j.toName}</strong> 방향으로 가고 있습니다.`;
+    ? '당신의 손끝이 <strong>서울역</strong>에서 출발해<br><strong>전국 시·군</strong>을 완주했습니다.'
+    : `당신의 손끝은 지금<br><strong>${j.fromName}</strong>${eulReul(j.fromName)} 지나 <strong>${j.toName}</strong> 방향으로 가고 있습니다.`;
 
   const passedEl = $('#journey-passed');
-  if (!j.passed.length) {
-    passedEl.innerHTML = '<span class="chip chip-empty">아직 지나온 곳이 없어요</span>';
-  } else {
-    const MAX_CHIPS = 18;
-    const shown  = j.passed.slice(-MAX_CHIPS);
-    const hidden = j.passed.length - shown.length;
-    passedEl.innerHTML =
-      (hidden > 0 ? `<span class="chip chip-more">+${hidden}곳</span>` : '') +
-      shown.map((c) => `<span class="chip">${c} ✓</span>`).join('');
+  const passedSig = String(j.passed.length);
+  if (passedEl.dataset.sig !== passedSig) {
+    if (!j.passed.length) {
+      passedEl.innerHTML = '<span class="chip chip-empty">아직 지나온 곳이 없어요</span>';
+    } else {
+      const MAX_CHIPS = 18;
+      const shown  = j.passed.slice(-MAX_CHIPS);
+      const hidden = j.passed.length - shown.length;
+      passedEl.innerHTML =
+        (hidden > 0 ? `<span class="chip chip-more">+${hidden}곳</span>` : '') +
+        shown.map((c) => `<span class="chip">${c} ✓</span>`).join('');
+    }
+    passedEl.dataset.sig = passedSig;
   }
 
-  // 경유지 도착 알림
+  // 경유지 도착 알림 (여행은 누적 기준이라 자정이 지나도 기준을 초기화하지 않는다)
   if (lastArrivedCount === null) {
     lastArrivedCount = j.passed.length;
   } else if (j.passed.length > lastArrivedCount) {
     const city = j.passed[j.passed.length - 1];
-    const msg  = ARRIVAL_MESSAGES[j.passed.length % ARRIVAL_MESSAGES.length];
-    toast(msg.replace('{city}', city).replace('\n', ' '));
+    const skipped = j.passed.length - lastArrivedCount - 1;
+    const msg  = ARRIVAL_MESSAGES[j.passed.length % ARRIVAL_MESSAGES.length]
+      .replace('{city}', city).replace('\n', ' ');
+    lastArrivedCount = j.passed.length;
+    announceMilestone('arrival', city, skipped > 0 ? `${msg} (그사이 ${skipped}곳을 더 지나왔어요)` : msg);
+    contributeNow();
+  } else if (j.passed.length < lastArrivedCount) {
     lastArrivedCount = j.passed.length;
   }
 
-  // 오늘의 칭호
   const title = generateTitle(s, tracker.dateKey, mouseKm, toKm(s.scrollDistancePixels));
   tracker.setTitle(title);
   $('#daily-title').textContent = `「${title}」`;
 
+  renderChallengeProgress(todayKm);
   updateControls();
 }
 
@@ -233,14 +309,20 @@ function renderWeekly() {
   const days  = loadThisWeek();
   const names = ['월', '화', '수', '목', '금', '토', '일'];
   let totKm = 0, totKeys = 0, totClicks = 0, totSec = 0;
-  const kms = days.map((d) =>
-    d.record ? toKm(d.record.mouseDistancePixels + d.record.scrollDistancePixels) : 0);
+  // 오늘 칸은 저장 전 실시간 값으로
+  const live = tracker.state;
+  const recOf = (d) => (d.key === tracker.dateKey ? live : d.record);
+  const kms = days.map((d) => {
+    const r = recOf(d);
+    return r ? toKm(r.mouseDistancePixels + r.scrollDistancePixels) : 0;
+  });
   days.forEach((d, i) => {
-    if (!d.record) return;
-    totKm    += kms[i];
-    totKeys  += d.record.keyCount;
-    totClicks += d.record.clickCount;
-    totSec   += d.record.activeSeconds;
+    const r = recOf(d);
+    if (!r) return;
+    totKm     += kms[i];
+    totKeys   += r.keyCount;
+    totClicks += r.clickCount;
+    totSec    += r.activeSeconds;
   });
   $('#week-km').textContent     = fmtDist(totKm);
   $('#week-keys').textContent   = `${fmtInt(totKeys)}타`;
@@ -264,14 +346,15 @@ function cardData() {
   const s        = tracker.state;
   const mouseKm  = toKm(s.mouseDistancePixels);
   const scrollM  = toKm(s.scrollDistancePixels) * 1000;
-  const travelKm = mouseKm + toKm(s.scrollDistancePixels);
-  const j        = getJourney(travelKm);
+  const todayKm  = mouseKm + toKm(s.scrollDistancePixels);
+  // 카드의 구간은 여행 지도와 같은 누적 기준 (예전엔 오늘 거리만으로 계산해 늘 '서울역→구리'였음)
+  const j        = getJourney(lifetimeTravelKm());
   const stairs   = stairsInfo(scrollM);
   const data = {
-    fromName:    '서울역',
-    toName:      j.finished ? '지구 한 바퀴' : j.toName,
-    travelKm,
-    travelText:  fmtDist(travelKm),
+    fromName:    j.finished ? '서울역' : j.fromName,
+    toName:      j.finished ? '인천공항' : j.toName,
+    travelKm:    todayKm,
+    travelText:  fmtDist(todayKm),
     keyCount:    s.keyCount,
     clickCount:  s.clickCount,
     mouseKm,
@@ -285,13 +368,23 @@ function cardData() {
   return data;
 }
 
-function openResult() {
+// 캔버스는 웹폰트가 준비되기 전에 그리면 기본 글꼴로 저장된다
+async function ensureFonts() {
+  try {
+    await Promise.race([
+      Promise.all([document.fonts.load('700 40px Inter'), document.fonts.load('500 30px Inter')]),
+      new Promise((r) => setTimeout(r, 1500)),
+    ]);
+  } catch { /* noop */ }
+}
+
+async function openResult() {
   const data = cardData();
   const summit = data.stairs.climbed.length > 0
-    ? ` · ${data.stairs.climbed.map(m => m.name).join('·')} 완등`
+    ? ` · ${data.stairs.climbed.map((m) => m.name).join('·')} 완등`
     : '';
   $('#result-sentence').innerHTML =
-    `오늘 당신의 손은<br><strong>서울역</strong>에서 <strong>${data.toName}</strong> 방향으로<br>${data.travelText} 이동했습니다.`;
+    `오늘 당신의 손은 <strong>${data.travelText}</strong>를 이동했어요.<br>지금 <strong>${data.fromName}</strong> → <strong>${data.toName}</strong> 구간을 여행 중입니다.`;
   $('#result-stats').innerHTML = [
     ['⌨ 키보드',    `${fmtInt(data.keyCount)}타`],
     ['🖱 마우스',    data.mouseText],
@@ -300,8 +393,11 @@ function openResult() {
     ['⏱ 활동 시간', data.activeText],
   ].map(([k, v]) => `<div class="result-row"><span>${k}</span><strong>${v}</strong></div>`).join('');
   $('#result-title').textContent = `「${data.title}」`;
-  drawResultCard($('#result-canvas'), data, currentSize);
+  const nickInput = $('#challenge-nick');
+  if (nickInput && !nickInput.value) nickInput.value = savedNick();
   openModal('#modal-result');
+  await ensureFonts();
+  drawResultCard($('#result-canvas'), data, currentSize);
 }
 
 $$('[data-card-size]').forEach((btn) => {
@@ -311,11 +407,148 @@ $$('[data-card-size]').forEach((btn) => {
     drawResultCard($('#result-canvas'), cardData(), currentSize);
   });
 });
-$('#btn-download-card').addEventListener('click', () => {
+$('#btn-download-card').addEventListener('click', async () => {
+  await ensureFonts();
   drawResultCard($('#result-canvas'), cardData(), currentSize);
   downloadCard($('#result-canvas'), tracker.dateKey, currentSize);
   toast('결과 카드를 저장했습니다.');
 });
+
+// ── 도전장 보내기 ──
+async function sendChallenge(nickOverride) {
+  const typed = (nickOverride ?? $('#challenge-nick')?.value ?? '').normalize('NFC').trim().slice(0, 12);
+  let nick = typed || savedNick() || '익명 여행자';
+  if (!filterContent(nick).ok) {
+    toast('닉네임에 쓸 수 없는 표현이 있어요. 다른 닉네임으로 바꿔주세요.');
+    return;
+  }
+  if (typed) { try { localStorage.setItem(NICK_KEY, typed); } catch { /* noop */ } }
+  const data = cardData();
+  if (data.travelKm <= 0.0005) {
+    toast('오늘 이동한 거리가 아직 없어요. 조금 여행한 뒤에 도전장을 보내보세요!');
+    return;
+  }
+  await ensureFonts();
+  const canvas = $('#result-canvas');
+  drawResultCard(canvas, data, 'square');
+  const url = buildChallengeUrl({ nick, km: data.travelKm, from: data.fromName, to: data.toName });
+  const text = `🏁 ${nick}의 도전장! 오늘 손끝으로 ${data.travelText} 여행했어요 (${data.fromName}→${data.toName} 구간). 따라잡을 수 있어요?`;
+  const r = await shareChallenge({ url, text, canvas });
+  if (r === 'copied') toast('도전장 링크를 복사했어요. 친구에게 붙여넣어 보내세요! 📋');
+  else if (r === 'shared') toast('도전장을 보냈어요! 🏁');
+  else if (r === 'failed') toast('공유에 실패했어요. 결과 카드를 저장해 직접 보내주세요.');
+  evaluateAndRenderBadges();
+}
+$('#btn-challenge')?.addEventListener('click', () => sendChallenge());
+
+// ── 받은 도전장 ──
+function initIncomingChallenge() {
+  const ch = readChallengeFromUrl();
+  const banner = $('#challenge-banner');
+  if (!ch || !banner) return;
+  $('#challenge-text').innerHTML = '';
+  const strong = (t) => { const b = document.createElement('strong'); b.textContent = t; return b; };
+  const p = $('#challenge-text');
+  p.append(strong(ch.n), `님의 도전장 — 오늘 `, strong(fmtDist(ch.k)),
+    ` 이동 · ${ch.f} → ${ch.t} 구간. 따라잡을 수 있을까요?`);
+  banner.hidden = false;
+  $('#challenge-accept').addEventListener('click', () => {
+    saveTarget(ch);
+    clearChallengeFromUrl();
+    banner.hidden = true;
+    if (tracker.status !== STATUS.RECORDING) toggleTracking();
+    $('#today').scrollIntoView({ behavior: 'smooth' });
+    toast(`도전 수락! 오늘 ${fmtDist(ch.k)}를 넘기면 승리예요 🏁`);
+    render();
+  });
+  $('#challenge-dismiss').addEventListener('click', () => {
+    clearChallengeFromUrl();
+    banner.hidden = true;
+  });
+}
+
+function renderChallengeProgress(todayKm) {
+  const box = $('#challenge-progress');
+  if (!box) return;
+  const t = loadTarget();
+  if (!t) { box.hidden = true; return; }
+  box.hidden = false;
+  const pct = Math.min(100, (todayKm / t.k) * 100);
+  $('#cp-fill').style.width = `${pct.toFixed(1)}%`;
+  $('#cp-now').textContent = `오늘 ${fmtDist(todayKm)}`;
+  if (!t.won && todayKm >= t.k) {
+    markTargetWon();
+    t.won = true;
+    toast(`🏆 ${t.n}님의 기록(${fmtDist(t.k)})을 넘었어요! 이번엔 내가 도전장을 보낼 차례예요.`, {
+      label: '도전장 보내기', onClick: () => sendChallenge(savedNick()),
+    });
+    evaluateAndRenderBadges();
+  }
+  $('#cp-title').textContent = t.won
+    ? `🏆 ${t.n}님의 ${fmtDist(t.k)} 돌파!`
+    : `🏁 ${t.n}님의 ${fmtDist(t.k)} 따라잡기`;
+  $('#cp-left').textContent = t.won ? '승리!' : `남은 거리 ${fmtDist(Math.max(0, t.k - todayKm))}`;
+  $('#cp-send').hidden = !t.won;
+  box.classList.toggle('is-won', !!t.won);
+}
+$('#cp-close')?.addEventListener('click', () => { clearTarget(); render(); });
+$('#cp-send')?.addEventListener('click', () => sendChallenge(savedNick()));
+
+// ── 배지 & 연속 기록 ──
+function evaluateAndRenderBadges() {
+  const s = tracker.state;
+  const todayPx = s.mouseDistancePixels + s.scrollDistancePixels;
+  const keys = new Set([...loadActiveDayKeys(), ...readExt().activeKeys]);
+  if (todayPx > 0 || s.keyCount > 0) keys.add(tracker.dateKey);
+  const { streak, todayActive } = computeStreak([...keys]);
+  const lifeKm = lifetimeTravelKm();
+  const j = getJourney(lifeKm);
+  const climbed = stairsInfo(toKm(s.scrollDistancePixels) * 1000).climbed;
+  let dj = false;
+  try { dj = localStorage.getItem('mousekm.dj') === '1'; } catch { /* noop */ }
+
+  const { fresh, list } = evaluateBadges({
+    lifeKm,
+    passed: new Set(j.passed),
+    finished: j.finished,
+    climbed: new Set(climbed.map((m) => m.name)),
+    keysToday: s.keyCount,
+    streak,
+    started: tracker.status !== STATUS.OFF || lifeKm > 0,
+    ext: extLifetimePx() > 0,
+    posted: hasPosted(),
+    dj,
+    shared: hasShared(),
+    challengeWon: hasWon(),
+  });
+
+  $('#streak-count').textContent = String(streak);
+  $('#streak-hint').textContent = streak === 0
+    ? '오늘 조금이라도 여행하면 연속 기록이 시작돼요'
+    : todayActive
+      ? (streak >= 7 ? '대단해요! 내일도 이어가 볼까요?' : `내일도 여행하면 ${streak + 1}일 연속!`)
+      : `오늘도 여행하면 ${streak + 1}일 연속! 기록이 끊기기 전에 출발해요`;
+  $('.streak-card')?.classList.toggle('is-cold', streak > 0 && !todayActive);
+
+  const unlocked = list.filter((b) => b.unlocked).length;
+  $('#badge-count').textContent = `${unlocked}/${BADGES.length}`;
+  const grid = $('#badge-grid');
+  const sig = list.map((b) => (b.unlocked ? 1 : 0)).join('');
+  if (grid.dataset.sig !== sig) {
+    grid.innerHTML = list.map((b) => `
+      <li class="badge${b.unlocked ? ' is-on' : ''}" title="${b.desc}${b.at ? ` · ${b.at} 획득` : ''}">
+        <span class="badge-emoji" aria-hidden="true">${b.unlocked ? b.emoji : '🔒'}</span>
+        <span class="badge-name">${b.name}</span>
+        <span class="sr-only">${b.unlocked ? '획득' : '미획득'} — ${b.desc}</span>
+      </li>`).join('');
+    grid.dataset.sig = sig;
+  }
+
+  if (fresh.length) {
+    const b = fresh[0];
+    toast(`🏅 배지 획득: ${b.emoji} ${b.name}${fresh.length > 1 ? ` 외 ${fresh.length - 1}개` : ''}\n${b.desc}`);
+  }
+}
 
 // ── 버튼 연결 ──
 function toggleTracking() {
@@ -324,9 +557,10 @@ function toggleTracking() {
   else {
     tracker.start();
     toast('기록을 시작했습니다. 서울역에서 출발합니다 🚉');
-    ensureMusic();   // 측정 시작과 함께 플레이리스트 자동 재생
+    ensureMusic();
   }
   render();
+  evaluateAndRenderBadges();
 }
 
 $('#btn-start-hero').addEventListener('click', () => {
@@ -340,8 +574,8 @@ $('#btn-reset').addEventListener('click', () => openModal('#modal-reset'));
 $('#widget-reset').addEventListener('click', () => openModal('#modal-reset'));
 $('#btn-reset-confirm').addEventListener('click', () => {
   tracker.reset();
-  lastArrivedCount = 0;
-  lastClimbedCount = 0;
+  lastArrivedCount = null;     // 누적 거리가 줄었으니 기준을 다시 잡는다(재도착 알림 방지)
+  lastClimbedCount = null;
   $('#modal-reset').classList.remove('open');
   render();
   renderWeekly();
@@ -378,7 +612,6 @@ function openEmbed(url, name, emoji, blocked) {
   $('#embed-open').href = url;
   $('#embed-fallback-open').href = url;
 
-  // 측정이 꺼져 있으면 켜서 "기능이 켜진 채로" 체험하게 한다
   if (tracker.status !== STATUS.RECORDING) {
     tracker.start();
     toast(`측정을 켜고 ${name}를 불러옵니다 🎮`);
@@ -388,7 +621,6 @@ function openEmbed(url, name, emoji, blocked) {
   openModal('#modal-embed');
   clearTimeout(embedTimer);
 
-  // 임베드가 차단된 사이트(X-Frame-Options 등): 바로 안내 + 새 창
   if (blocked) {
     frame.removeAttribute('src');
     frame.style.visibility = 'hidden';
@@ -399,21 +631,21 @@ function openEmbed(url, name, emoji, blocked) {
     return;
   }
 
-  // 임베드 가능한 사이트: 로딩 표시 후 인라인 로드
   frame.style.visibility = 'hidden';
   fallback.hidden = true;
   loading.hidden  = false;
+  frame.onload = null;
   frame.src = url;
 
-  // 혹시 모를 로드 실패 대비: 시간 내 onload 없으면 대체 안내
   embedTimer = setTimeout(() => {
-    if (loading.hidden) return;         // 이미 로드됨
+    if (loading.hidden) return;
     loading.hidden = true;
     $('#embed-fallback-msg').textContent =
       `${name}를 페이지 안에서 불러오지 못했어요. 새 창에서 열어볼 수 있습니다.`;
     fallback.hidden = false;
   }, 8000);
   frame.onload = () => {
+    if (frame.getAttribute('src') === 'about:blank') return;   // 닫을 때의 빈 페이지 로드는 무시
     clearTimeout(embedTimer);
     loading.hidden  = true;
     fallback.hidden = true;
@@ -431,14 +663,6 @@ $$('[data-embed]').forEach((el) => {
     );
   });
 });
-// 모달이 닫힐 때 iframe 정리(리소스 해제)
-$('#modal-embed')?.addEventListener('click', (e) => {
-  if (e.target.id === 'modal-embed') {
-    const f = $('#embed-frame'); if (f) f.src = 'about:blank';
-  }
-});
-$('#modal-embed')?.querySelectorAll('[data-close]').forEach((b) =>
-  b.addEventListener('click', () => { const f = $('#embed-frame'); if (f) f.src = 'about:blank'; }));
 
 if (window.matchMedia('(pointer: coarse)').matches) {
   const note = $('#mobile-note');
@@ -449,7 +673,6 @@ if (window.matchMedia('(pointer: coarse)').matches) {
 function renderMonitorSettings() {
   const rows     = $('#monitor-rows');
   const countSel = display.monitors.length;
-  // 감지된 인치가 기본 목록에 없으면 그 값도 선택지로 추가한다 (예: 27.3인치)
   const inchOpts = (sel) => {
     const list = MONITOR_INCHES.includes(sel) || sel == null
       ? MONITOR_INCHES
@@ -497,6 +720,8 @@ function renderMonitorSettings() {
 function applyDisplay() {
   saveDisplay(display);
   kmRate = pxPerKm(display);
+  lastArrivedCount = null;     // 환산 기준이 바뀌면 거리 자체가 달라지므로 기준 재설정
+  lastClimbedCount = null;
   renderMonitorSettings();
   render();
   renderWeekly();
@@ -530,20 +755,45 @@ $('#btn-detect-monitors').addEventListener('click', async () => {
 
 // ── 루프 시작 ──
 tracker.on('rollover', () => {
-  lastArrivedCount = 0;
-  lastClimbedCount = 0;
-  toast('자정이 지나 새로운 여행이 시작됐습니다.');
+  lastClimbedCount = null;     // 계단은 하루 단위라 새 날엔 기준만 다시 잡는다
+  toast('자정이 지나 새로운 하루가 시작됐어요. 여행은 이어집니다.');
   renderWeekly();
+  evaluateAndRenderBadges();
 });
+
+// 다른 탭에서 기록이 저장되면 누적 합계 캐시를 비운다
+window.addEventListener('storage', (e) => {
+  if (e.key === 'mousekm.days.v1') { invalidatePastTotals(); renderWeekly(); }
+  if (e.key === 'mousekm.ext.v1') extCache.at = 0;
+});
+['mousekm:posted', 'mousekm:dj', 'mousekm:shared'].forEach((ev) =>
+  window.addEventListener(ev, () => evaluateAndRenderBadges()));
 
 renderMonitorSettings();
 render();
 renderWeekly();
+evaluateAndRenderBadges();
+initIncomingChallenge();
 setInterval(render, TRACKING.UI_UPDATE_INTERVAL_MS);
 setInterval(renderWeekly, 30_000);
+setInterval(evaluateAndRenderBadges, 5_000);
 
-// 손끝 응원 방명록 (Firebase 익명) — 실패해도 사이트 나머지는 정상 동작
+if (tracker.status === STATUS.RECORDING) {
+  toast('이어서 기록하고 있어요 ● 멈추려면 일시정지를 눌러주세요.');
+}
+
+// 손끝 응원 방명록 (Firebase) — 실패해도 사이트 나머지는 정상 동작
 initWall().catch(() => {});
 
 // 플레이리스트 (유튜브 임베드) — 측정 시작 시 자동 재생
 initPlaylist();
+
+// 모두의 손끝 여행 — 방문자 거리 합산
+initCommunity({
+  getSitePx: () => ({
+    px: tracker.state.mouseDistancePixels + tracker.state.scrollDistancePixels,
+    day: tracker.dateKey,
+  }),
+  getExtPx: extLifetimePx,
+  getKmRate: () => kmRate,
+});

@@ -56,19 +56,70 @@ export function deleteDay(key) {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(all));
   } catch { /* noop */ }
+  invalidatePastTotals();
 }
 
-// 저장된 모든 날짜의 이동 픽셀 합계 — 누적(평생) 여행 지도용
-export function loadLifetimeTotals() {
+const NUM_FIELDS = ['keyCount', 'clickCount', 'mouseDistancePixels', 'scrollDistancePixels', 'activeSeconds', 'idleSeconds'];
+
+// 증분 병합 저장 — 마지막 저장(base) 이후 이 탭에서 늘어난 만큼만 저장값에 더한다.
+// 통째로 덮어쓰면 mousekm 탭이 여러 개일 때 서로의 기록을 지워버린다.
+// 반환: 병합된 최신 기록(다른 탭의 증가분 포함) — 호출한 쪽은 이것을 새 state/base로 쓴다.
+export function mergeDay(key, state, base) {
+  try {
+    const all = loadAll();
+    const stored = { ...emptyRecord(), ...(all[key] || {}) };
+    let changed = false;
+    for (const f of NUM_FIELDS) {
+      const delta = (state[f] || 0) - (base[f] || 0);
+      if (delta !== 0) changed = true;
+      stored[f] = Math.max(0, (stored[f] || 0) + delta);
+    }
+    if (state.lastActivityAt && state.lastActivityAt !== stored.lastActivityAt) {
+      stored.lastActivityAt = Math.max(stored.lastActivityAt || 0, state.lastActivityAt);
+      changed = true;
+    }
+    if (!stored.sessionStartedAt && state.sessionStartedAt) {
+      stored.sessionStartedAt = state.sessionStartedAt;
+      changed = true;
+    }
+    if (state.title && state.title !== stored.title) {
+      stored.title = state.title;
+      changed = true;
+    }
+    if (changed) {
+      all[key] = stored;
+      localStorage.setItem(STORE_KEY, JSON.stringify(all));
+    }
+    return stored;
+  } catch {
+    return null; // 저장 공간 부족 등 — 측정은 계속한다
+  }
+}
+
+// 오늘을 제외한 모든 날짜의 이동 픽셀 합계 (누적 여행용). 매 렌더마다 전체 JSON을
+// 파싱하지 않도록 캐시하고, 날짜 변경·초기화·다른 탭의 저장 때만 다시 계산한다.
+let pastCache = null;
+export function loadPastTotals(todayKeyStr) {
+  if (pastCache && pastCache.key === todayKeyStr) return pastCache;
   const all = loadAll();
   let mousePx = 0, scrollPx = 0;
-  for (const key in all) {
-    const r = all[key];
-    if (!r) continue;
-    mousePx  += r.mouseDistancePixels  || 0;
-    scrollPx += r.scrollDistancePixels || 0;
+  for (const k in all) {
+    if (k === todayKeyStr || !all[k]) continue;
+    mousePx  += all[k].mouseDistancePixels  || 0;
+    scrollPx += all[k].scrollDistancePixels || 0;
   }
-  return { mousePx, scrollPx };
+  pastCache = { key: todayKeyStr, mousePx, scrollPx };
+  return pastCache;
+}
+export function invalidatePastTotals() { pastCache = null; }
+
+// 기록이 있는 날짜 목록 (연속 기록 계산용)
+export function loadActiveDayKeys() {
+  const all = loadAll();
+  return Object.keys(all).filter((k) => {
+    const r = all[k];
+    return r && ((r.mouseDistancePixels || 0) + (r.scrollDistancePixels || 0) > 0 || (r.keyCount || 0) > 0);
+  });
 }
 
 // 이번 주(월~일) 기록 목록 반환 — 주간 대시보드용

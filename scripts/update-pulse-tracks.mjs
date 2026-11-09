@@ -21,7 +21,6 @@ const OUT = new URL('../data/pulse-tracks.json', import.meta.url);
 const FALLBACK = [
   { id: '9E40d1donW4', label: '분위기 좋은 편집샵 재즈 힙합 🎷' },
   { id: 'N7XS4HasGk4', label: 'Late Night Jazz Hip Hop ☕' },
-  { id: 'bAQlnYFfscE', label: 'Smooth R&B & Soul Mix' },
   { id: 'uVDR99PBFlg', label: '위험하게 분위기 좋은 둠칫 플리' },
   { id: 'G5PYccAFx3A', label: '걷다가 기분 좋아지는 도시팝 🚦' },
 ];
@@ -36,13 +35,20 @@ function decodeEntities(s) {
 
 /* 해시태그·장식 문자 정리 + 길이 제한 */
 function cleanLabel(t) {
+  // 유튜브 제목은 한글이 풀어쓴 자모(NFD)로 오기도 한다 → 먼저 NFC로 합쳐야
+  // 글자 수가 제대로 세지고, 자른 자리에 'ᄀ' 같은 자모 조각이 남지 않는다
   let s = decodeEntities(t)
+    .normalize('NFC')
     .replace(/⁽[^⁾]*⁾/g, ' ')        // ⁽ᴾˡᵃʸˡⁱˢᵗ⁾ 같은 위첨자 장식 제거
     .replace(/[#＃][^\s#＃]+/g, ' ')  // 해시태그 제거
     .replace(/[|｜·・]+/g, ' ')       // 구분자 정리
     .replace(/\s+/g, ' ')
     .trim();
-  if (s.length > 40) s = s.slice(0, 39).trim() + '…';
+  // 이모지·결합 문자가 반쪽 나지 않게 '보이는 글자(grapheme)' 단위로 자른다
+  const chars = typeof Intl !== 'undefined' && Intl.Segmenter
+    ? [...new Intl.Segmenter('ko', { granularity: 'grapheme' }).segment(s)].map((x) => x.segment)
+    : [...s];
+  if (chars.length > 40) s = chars.slice(0, 39).join('').trim() + '…';
   return s;
 }
 
