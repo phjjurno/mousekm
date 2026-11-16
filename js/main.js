@@ -592,10 +592,6 @@ $('#btn-notify').addEventListener('click', () => {
   toast('출시되면 이 브라우저에서 알려드릴게요! (준비 중)');
 });
 
-$$('[data-open-privacy]').forEach((btn) =>
-  btn.addEventListener('click', () => openModal('#modal-privacy')));
-$$('[data-open-terms]').forEach((btn) =>
-  btn.addEventListener('click', () => openModal('#modal-terms')));
 
 $$('[data-chrome-cta]').forEach((btn) =>
   btn.addEventListener('click', () => toast('확장프로그램은 웹스토어 심사 준비 중이에요.\n지금은 GitHub(phjjurno/mousekm)의 extension 폴더를\nchrome://extensions → 개발자 모드로 설치할 수 있습니다.')));
